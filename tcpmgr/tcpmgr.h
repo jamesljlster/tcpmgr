@@ -8,6 +8,8 @@
 struct TCPMGR_LIST
 {
 	pthread_t tHandle;
+	sock_t clientSock;
+
 	int available;
 	int closeJoin;
 };
@@ -19,6 +21,8 @@ typedef struct TCPMGR_STRUCT
 
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
+
+	sock_t listenSock;
 } tcpmgr_t;
 
 #ifdef __cplusplus
