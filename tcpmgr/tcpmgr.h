@@ -1,6 +1,26 @@
 #ifndef __TCPMGR_H__
 #define __TCPMGR_H__
 
+#include <pthread.h>
+
+#include "tcpmgr_sock.h"
+
+struct TCPMGR_LIST
+{
+	pthread_t tHandle;
+	int available;
+	int closeJoin;
+};
+
+typedef struct TCPMGR_STRUCT
+{
+	int mgrListLen;
+	struct TCPMGR_LIST* mgrList;
+
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+} tcpmgr_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
