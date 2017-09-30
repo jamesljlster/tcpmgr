@@ -1,3 +1,3 @@
 #include "tcpmgr.h"
 
-tcpmgr_t tcpMgr;
+tcpmgr_t* tcpMgr = NULL;
