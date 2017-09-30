@@ -4,6 +4,7 @@
 #include <pthread.h>
 
 #include "tcpmgr_sock.h"
+#include "tcpmgr_arg.h"
 
 struct TCPMGR_LIST
 {
@@ -28,6 +29,8 @@ typedef struct TCPMGR_STRUCT
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
 
 #ifdef __cplusplus
 }

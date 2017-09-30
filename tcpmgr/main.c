@@ -4,13 +4,11 @@
 
 #include "tcpmgr.h"
 #include "tcpmgr_global.h"
-#include "tcpmgr_arg.h"
 
 #include "debug.h"
 
 int main(int argc, char* argv[])
 {
-	int iResult;
 	int ret = 0;
 	tcpmgr_arg_t arg;
 
@@ -21,16 +19,35 @@ int main(int argc, char* argv[])
 	tcpmgr_arg_set_default(&arg);
 
 	// Parse argument
-	iResult = tcpmgr_arg_parse(&arg, argc, argv);
-	if(iResult < 0)
+	ret = tcpmgr_arg_parse(&arg, argc, argv);
+	if(ret < 0)
 	{
 		tcpmgr_arg_print_usage();
-		ret = -1;
 		goto RET;
 	}
 	else
 	{
 		tcpmgr_arg_print_summary(&arg);
+	}
+
+	// Create client manage list
+	tcpMgr.mgrList = calloc(arg.maxClient, sizeof(struct TCPMGR_LIST));
+	if(tcpMgr.mgrList == NULL)
+	{
+		printf("Memory allocation for client manage list failed!\n");
+		ret = -1;
+		goto RET;
+	}
+	else
+	{
+		tcpMgr.mgrListLen = arg.maxClient;
+	}
+
+	// Initial server service
+	ret = tcpmgr_server_init(&tcpMgr, &arg);
+	if(ret < 0)
+	{
+		goto RET;
 	}
 
 RET:
