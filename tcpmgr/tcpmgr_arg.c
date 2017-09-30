@@ -44,7 +44,7 @@ int tcpmgr_arg_parse(tcpmgr_arg_t* argPtr, int argc, char* argv[])
 					tmp = strtol(argv[i + 1], &tmpPtr, 10);
 					if(tmpPtr == argv[i + 1])
 					{
-						printf("Failed to convert %s to server port!\n", tmpPtr);
+						printf("Failed to convert \'%s\' to server port!\n", tmpPtr);
 						ret = -1;
 						goto RET;
 					}
@@ -67,7 +67,7 @@ int tcpmgr_arg_parse(tcpmgr_arg_t* argPtr, int argc, char* argv[])
 					tmp = strtol(argv[i + 1], &tmpPtr, 10);
 					if(tmpPtr == argv[i + 1])
 					{
-						printf("Failed to convert %s to max client!\n", tmpPtr);
+						printf("Failed to convert \'%s\' to max client!\n", tmpPtr);
 						ret = -1;
 						goto RET;
 					}
@@ -93,9 +93,9 @@ RET:
 void tcpmgr_arg_print_usage()
 {
 	printf("Program arguments:\n");
-	printf("    %s\tHost IP Address\n", tcpmgr_arg_list[TCPMGR_ARG_HOST_IP]);
-	printf("    %s\tHost Port\n", tcpmgr_arg_list[TCPMGR_ARG_HOST_PORT]);
-	printf("    %s\tMaximum Clients", tcpmgr_arg_list[TCPMGR_ARG_MAX_CLIENT]);
+	printf("    %s: Host IP Address\n", tcpmgr_arg_list[TCPMGR_ARG_HOST_IP]);
+	printf("    %s: Host Port\n", tcpmgr_arg_list[TCPMGR_ARG_HOST_PORT]);
+	printf("    %s: Maximum Clients", tcpmgr_arg_list[TCPMGR_ARG_MAX_CLIENT]);
 }
 
 void tcpmgr_arg_print_summary(tcpmgr_arg_t* argPtr)
