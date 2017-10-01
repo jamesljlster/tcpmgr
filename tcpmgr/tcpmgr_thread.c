@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "tcpmgr.h"
+#include "tcpmgr_private.h"
 #include "debug.h"
 
 void* tcpmgr_client_thread(void* arg)
@@ -8,7 +9,7 @@ void* tcpmgr_client_thread(void* arg)
 	struct TCPMGR_LIST* listPtr = arg;
 
 	// Run client task
-	clientArg->client_task(listPtr->usrData, (int)listPtr->clientSock);
+	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock);
 
 	// Cleanup
 	pthread_cond_signal(listPtr->condPtr);
@@ -20,7 +21,7 @@ void* tcpmgr_client_thread(void* arg)
 
 void* tcpmgr_accept_task(void* arg)
 {
-	int tmpIndex;
+	int i, tmpIndex;
 	tcpmgr_t mgr = arg;
 
 	pthread_t clientTh;
@@ -86,7 +87,7 @@ void* tcpmgr_accept_task(void* arg)
 void* tcpmgr_clean_task(void* arg)
 {
 	int i;
-	tcpmgr_t* mgrPtr = arg;
+	tcpmgr_t mgrPtr = arg;
 
 	assert(mgrPtr->mgrList != NULL);
 
