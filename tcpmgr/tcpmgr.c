@@ -10,12 +10,65 @@ int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg)
 {
 	int ret = TCPMGR_NO_ERROR;
 
+	LOG("enter");
+
+	// Create clean task
+	ret = pthread_create(&mgr->cleanTask, NULL, tcpmgr_clean_task, mgr);
+	if(ret < 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		goto RET;
+	}
+	else
+	{
+		mgr->cleanTaskStatus = 1;
+	}
+
+	// Create accept task
+	ret = pthread_create(&mgr->acceptTask, NULL, tcpmgr_accept_task, mgr);
+	if(ret < 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		pthread_cancel(mgr->cleanTask);
+		pthread_join(mgr->cleanTask, NULL);
+		goto RET;
+	}
+	else
+	{
+		mgr->acceptTaskStatus = 1;
+	}
+
+RET:
+	LOG("exit");
 	return ret;
 }
 
 int tcpmgr_join(tcpmgr_t mgr)
 {
 	int ret = TCPMGR_NO_ERROR;
+
+	LOG("enter");
+
+	// Cancel and join accept task
+	if(mgr->acceptTaskStatus > 0)
+	{
+		pthread_cancel(mgr->acceptTask);
+		pthread_join(mgr->acceptTask, NULL);
+	}
+
+	// Cancel and join clean task
+	if(mgr->cleanTaskStatus > 0)
+	{
+		pthread_cancel(mgr->cleanTask);
+		pthread_join(mgr->cleanTask, NULL);
+	}
+
+	// Cleanup
+	tcpmgr_server_cleanup(mgr);
+	tcpmgr_struct_cleanup(mgr);
+	free(mgr);
+
+	LOG("exit");
 
 	return ret;
 }

@@ -36,6 +36,9 @@ struct TCPMGR
 	int cleanTaskStatus;
 	pthread_t cleanTask;
 
+	int acceptTaskStatus;
+	pthread_t acceptTask;
+
 	sock_t listenSock;
 
 	void* (*client_task)(void*, int);
