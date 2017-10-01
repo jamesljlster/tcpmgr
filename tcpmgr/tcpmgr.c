@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "tcpmgr.h"
 
@@ -44,6 +45,28 @@ ERR:
 	sock_close(tmpSocket);
 
 RET:
+	return ret;
+}
+
+int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
+{
+	int ret = 0;
+
+	// Zero memory
+	memset(mgrPtr, 0, sizeof(tcpmgr_t));
+
+	// Create client manage list
+	mgrPtr->mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));
+	if(mgrPtr->mgrList == NULL)
+	{
+		printf("Memory allocation for client manage list failed!\n");
+		ret = -1;
+	}
+	else
+	{
+		mgrPtr->mgrListLen = argPtr->maxClient;
+	}
+
 	return ret;
 }
 

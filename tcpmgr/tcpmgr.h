@@ -30,6 +30,7 @@ typedef struct TCPMGR_STRUCT
 extern "C" {
 #endif
 
+int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
 int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
 
 #ifdef __cplusplus
