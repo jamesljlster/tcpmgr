@@ -5,7 +5,69 @@
 #include "tcpmgr.h"
 #include "debug.h"
 
-int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
+int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg)
+{
+	int ret = TCPMGR_NO_ERROR;
+
+	return ret;
+}
+
+int tcpmgr_join(tcpmgr_t mgr)
+{
+	int ret = TCPMGR_NO_ERROR;
+
+	return ret;
+}
+
+int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient)
+{
+	int ret = TCPMGR_NO_ERROR;
+	tcpmgr_t tmpMgr = NULL;
+	tcpmgr_arg_t arg;
+
+	// Memory allocation for manage structure
+	tmpMgr = calloc(1, sizeof(struct TCPMGR));
+	if(tmpMgr == NULL)
+	{
+		ret = TCPMGR_MEM_FAILED;
+		goto RET;
+	}
+
+	// Set argument
+	arg.hostIP = hostIP;
+	arg.hostPort = hostPort;
+	arg.maxClient = maxClient;
+
+	// Initial tcpmgr struct
+	ret = tcpmgr_struct_init(tmpMgr, &arg);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	// Initial server service
+	ret = tcpmgr_server_init(tmpMgr, &arg);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	// Set default output stream
+	tmpMgr.stream = stdout;
+
+	// Assign value
+	*mgrPtr = tmpMgr;
+
+ERR:
+	tcpmgr_server_cleanup(tmpMgr);
+	tcpmgr_struct_cleanup(tmpMgr);
+	free(tmpMgr);
+
+RET:
+	return ret;
+}
+
+int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
 	sock_t tmpSocket;
@@ -54,7 +116,7 @@ RET:
 	return ret;
 }
 
-void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
+void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 {
 	int i;
 
@@ -86,7 +148,7 @@ void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
 	LOG("exit");
 }
 
-void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
+void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr)
 {
 	LOG("enter");
 
@@ -97,15 +159,15 @@ void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
 	LOG("exit");
 }
 
-int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
+int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
-	tcpmgr_t tmpMgr;
+	struct TCPMGR tmpMgr;
 
 	LOG("enter");
 
 	// Zero memory
-	memset(&tmpMgr, 0, sizeof(tcpmgr_t));
+	memset(&tmpMgr, 0, sizeof(struct TCPMGR));
 
 	// Create client manage list
 	tmpMgr.mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));

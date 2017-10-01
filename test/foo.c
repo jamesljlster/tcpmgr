@@ -16,3 +16,8 @@ void* client_thread(void* arg)
 	listPtr->closeJoin = 1;
 	pthread_exit(NULL);
 }
+
+int main()
+{
+	return 0;
+}

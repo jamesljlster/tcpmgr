@@ -8,10 +8,11 @@
 
 #include "debug.h"
 
+/*
 void* client_thread(void* arg);
 void interrupt_close(int arg);
 
-int main(int argc, char* argv[])
+int tcpmgr_main(int argc, char* argv[])
 {
 	int i, tmpIndex;
 	int ret = 0;
@@ -134,4 +135,4 @@ void interrupt_close(int arg)
 	LOG("exit");
 	exit(0);
 }
-
+*/

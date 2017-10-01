@@ -1,45 +1,25 @@
 #ifndef __TCPMGR_H__
 #define __TCPMGR_H__
 
-#include <pthread.h>
+#include <stdio.h>
 
-#include "tcpmgr_sock.h"
-#include "tcpmgr_arg.h"
-
-struct TCPMGR_LIST
+enum TCPMGR_RETURN_VALUE
 {
-	pthread_t tHandle;
-	sock_t clientSock;
-
-	int occupied;
-	int closeJoin;
+	TCPMGR_NO_ERROR		= 0,
+	TCPMGR_MEM_FAILED	= -1,
+	TCPMGR_SYS_FAILED	= -2
 };
 
-typedef struct TCPMGR_STRUCT
-{
-	int stop;
-	int mgrListLen;
-	struct TCPMGR_LIST* mgrList;
-
-	int serverFlag;
-
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-
-	sock_t listenSock;
-} tcpmgr_t;
+typedef struct TCPMGR* tcpmgr_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
-int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
-
-void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr);
-void tcpmgr_cleanup(tcpmgr_t* mgrPtr);
-
-void* tcpmgr_clean_task(void* arg);
+int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
+int tcpmgr_set_output_stream(tcpmgr_t mgr);
+int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg);
+int tcpmgr_join(tcpmgr_t mgr);
 
 #ifdef __cplusplus
 }
