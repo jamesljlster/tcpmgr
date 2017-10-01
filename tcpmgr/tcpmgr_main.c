@@ -3,12 +3,12 @@
 #include <string.h>
 #include <signal.h>
 
+/*
 #include "tcpmgr.h"
 #include "tcpmgr_global.h"
 
 #include "debug.h"
 
-/*
 void* client_thread(void* arg);
 void interrupt_close(int arg);
 
