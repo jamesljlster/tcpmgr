@@ -46,7 +46,5 @@ CLEANUP:
 
 RET:
 	tcpmgr_cleanup(&tcpMgr);
-
-	LOG("exit");
 	return ret;
 }

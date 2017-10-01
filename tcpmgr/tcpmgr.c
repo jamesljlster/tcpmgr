@@ -84,6 +84,8 @@ void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
 	LOG("enter");
 
 	free(mgrPtr->mgrList);
+	pthread_mutex_destroy(&mgrPtr->mutex);
+	pthread_cond_destroy(&mgrPtr->cond);
 
 	LOG("exit");
 }
@@ -91,24 +93,46 @@ void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
 int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
+	tcpmgr_t tmpMgr;
 
 	LOG("enter");
 
 	// Zero memory
-	memset(mgrPtr, 0, sizeof(tcpmgr_t));
+	memset(&tmpMgr, 0, sizeof(tcpmgr_t));
 
 	// Create client manage list
-	mgrPtr->mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));
-	if(mgrPtr->mgrList == NULL)
+	tmpMgr.mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));
+	if(tmpMgr.mgrList == NULL)
 	{
 		printf("Memory allocation for client manage list failed!\n");
 		ret = -1;
 	}
 	else
 	{
-		mgrPtr->mgrListLen = argPtr->maxClient;
+		tmpMgr.mgrListLen = argPtr->maxClient;
 	}
 
+	// Create mutex and condition variable
+	ret = pthread_mutex_init(&tmpMgr.mutex, NULL);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	ret = pthread_cond_init(&tmpMgr.cond, NULL);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	// Assign value
+	*mgrPtr = tmpMgr;
+	goto RET;
+
+ERR:
+	tcpmgr_cleanup(&tmpMgr);
+
+RET:
 	LOG("exit");
 	return ret;
 }
