@@ -1,13 +1,17 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "tcpmgr.h"
+#include "debug.h"
 
 int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
 	sock_t tmpSocket;
 	struct sockaddr_in mgrAddr;
+
+	LOG("enter");
 
 	// Create socket
 	mgrAddr.sin_family = AF_INET;
@@ -45,12 +49,50 @@ ERR:
 	sock_close(tmpSocket);
 
 RET:
+	LOG("exit");
 	return ret;
+}
+
+void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
+{
+	int i;
+
+	LOG("enter");
+
+	for(i = 0; i < mgrPtr->mgrListLen; i++)
+	{
+		if(mgrPtr->mgrList[i].occupied > 0)
+		{
+			pthread_cancel(mgrPtr->mgrList[i].tHandle);
+			mgrPtr->mgrList[i].occupied = 0;
+		}
+
+		if(mgrPtr->mgrList[i].closeJoin > 0)
+		{
+			pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+			mgrPtr->mgrList[i].closeJoin = 0;
+		}
+	}
+
+	sock_close(mgrPtr->listenSock);
+
+	LOG("exit");
+}
+
+void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
+{
+	LOG("enter");
+
+	free(mgrPtr->mgrList);
+
+	LOG("exit");
 }
 
 int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
+
+	LOG("enter");
 
 	// Zero memory
 	memset(mgrPtr, 0, sizeof(tcpmgr_t));
@@ -67,6 +109,7 @@ int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 		mgrPtr->mgrListLen = argPtr->maxClient;
 	}
 
+	LOG("exit");
 	return ret;
 }
 

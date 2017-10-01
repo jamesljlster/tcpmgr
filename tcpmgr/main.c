@@ -38,10 +38,15 @@ int main(int argc, char* argv[])
 	ret = tcpmgr_server_init(&tcpMgr, &arg);
 	if(ret < 0)
 	{
-		goto RET;
+		goto CLEANUP;
 	}
 
+CLEANUP:
+	tcpmgr_server_cleanup(&tcpMgr);
+
 RET:
+	tcpmgr_cleanup(&tcpMgr);
+
 	LOG("exit");
 	return ret;
 }

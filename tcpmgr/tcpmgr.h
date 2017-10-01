@@ -11,7 +11,7 @@ struct TCPMGR_LIST
 	pthread_t tHandle;
 	sock_t clientSock;
 
-	int available;
+	int occupied;
 	int closeJoin;
 };
 
@@ -32,6 +32,9 @@ extern "C" {
 
 int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
 int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
+
+void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr);
+void tcpmgr_cleanup(tcpmgr_t* mgrPtr);
 
 #ifdef __cplusplus
 }
