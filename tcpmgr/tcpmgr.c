@@ -6,7 +6,7 @@
 #include "tcpmgr_private.h"
 #include "debug.h"
 
-int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg)
+int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg)
 {
 	int ret = TCPMGR_NO_ERROR;
 

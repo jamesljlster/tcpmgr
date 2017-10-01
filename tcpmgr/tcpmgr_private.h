@@ -17,7 +17,7 @@ struct TCPMGR_LIST
 	int occupied;
 	int closeJoin;
 
-	void* (*client_task)(void*, int);
+	void (*client_task)(void*, int);
 	void* usrData;
 };
 
@@ -41,7 +41,7 @@ struct TCPMGR
 
 	sock_t listenSock;
 
-	void* (*client_task)(void*, int);
+	void (*client_task)(void*, int);
 	void* usrData;
 };
 

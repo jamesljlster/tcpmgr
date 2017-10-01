@@ -18,7 +18,7 @@ extern "C" {
 
 int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
 int tcpmgr_set_output_stream(tcpmgr_t mgr);
-int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg);
+int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg);
 int tcpmgr_join(tcpmgr_t mgr);
 
 #ifdef __cplusplus
