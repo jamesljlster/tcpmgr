@@ -8,12 +8,16 @@
 
 #include "debug.h"
 
+void* client_thread(void* arg);
 void interrupt_close(int arg);
 
 int main(int argc, char* argv[])
 {
+	int i, tmpIndex;
 	int ret = 0;
 	tcpmgr_arg_t arg;
+	sock_t clientSock;
+	pthread_t clientTh;
 
 	// Set signal handler
 	signal(SIGINT, interrupt_close);
@@ -60,6 +64,54 @@ int main(int argc, char* argv[])
 		cleanTaskStatus = 1;
 	}
 
+	// Loop for accept clients
+	while(tcpMgr.stop == 0)
+	{
+		// Accept client
+		printf("Waiting for client connection...\n");
+		clientSock = accept(tcpMgr.listenSock, NULL, NULL);
+		if(clientSock < 0)
+		{
+			printf("Accept failed!\n");
+			continue;
+		}
+
+		// Search empty entry
+		tmpIndex = -1;
+		for(i = 0; i < tcpMgr.mgrListLen; i++)
+		{
+			if(tcpMgr.mgrList[i].occupied == 0)
+			{
+				LOG("Entity %d available for client", i);
+				tmpIndex = i;
+				break;
+			}
+		}
+
+		// Checking
+		if(tmpIndex < 0)
+		{
+			// Reject connection
+			printf("No more entity for client available. Connection rejected!\n");
+			sock_close(clientSock);
+		}
+		else
+		{
+			// Create client thread
+			if(pthread_create(&clientTh, NULL, client_thread, &tcpMgr.mgrList[i]) < 0)
+			{
+				printf("Client thread initialization failed! Connection rejected!\n");
+				sock_close(clientSock);
+			}
+			else
+			{
+				tcpMgr.mgrList[i].tHandle = clientTh;
+				tcpMgr.mgrList[i].clientSock = clientSock;
+				tcpMgr.mgrList[i].occupied = 1;
+			}
+		}
+	}
+
 RET:
 	interrupt_close(0);
 	return ret;
@@ -79,6 +131,7 @@ void interrupt_close(int arg)
 	tcpmgr_server_cleanup(&tcpMgr);
 	tcpmgr_cleanup(&tcpMgr);
 
+	LOG("exit");
 	exit(0);
 }
 

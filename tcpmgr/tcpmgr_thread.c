@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "tcpmgr.h"
+#include "debug.h"
 
 void* tcpmgr_clean_task(void* arg)
 {
@@ -19,7 +20,8 @@ void* tcpmgr_clean_task(void* arg)
 		{
 			if(mgrPtr->mgrList[i].closeJoin > 0)
 			{
-				pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+				LOG("Join %d thread", i);
+				pthread_join(mgrPtr->mgrList[i].tHandle, NULL);
 				mgrPtr->mgrList[i].closeJoin = 0;
 				mgrPtr->mgrList[i].occupied = 0;
 			}
