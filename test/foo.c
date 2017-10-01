@@ -1,11 +1,11 @@
 #include <tcpmgr.h>
-#include <tcpmgr_global.h>
 
 int foo()
 {
 	return 0;
 }
 
+/*
 void* client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
@@ -16,6 +16,7 @@ void* client_thread(void* arg)
 	listPtr->closeJoin = 1;
 	pthread_exit(NULL);
 }
+*/
 
 int main()
 {

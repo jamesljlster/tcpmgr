@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "tcpmgr.h"
+#include "tcpmgr_private.h"
 #include "debug.h"
 
 int tcpmgr_start(tcpmgr_t mgr, void* (*client_task)(void*, int), void* arg)
@@ -53,7 +54,7 @@ int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClien
 	}
 
 	// Set default output stream
-	tmpMgr.stream = stdout;
+	tmpMgr->stream = stdout;
 
 	// Assign value
 	*mgrPtr = tmpMgr;
@@ -199,7 +200,7 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	goto RET;
 
 ERR:
-	tcpmgr_cleanup(&tmpMgr);
+	tcpmgr_struct_cleanup(&tmpMgr);
 
 RET:
 	LOG("exit");
