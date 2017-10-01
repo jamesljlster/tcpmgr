@@ -43,6 +43,7 @@ int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 
 	// Assign value
 	mgrPtr->listenSock = tmpSocket;
+	mgrPtr->serverFlag = 1;
 	goto RET;
 
 ERR:
@@ -59,22 +60,28 @@ void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
 
 	LOG("enter");
 
-	for(i = 0; i < mgrPtr->mgrListLen; i++)
+	if(mgrPtr->mgrList != NULL)
 	{
-		if(mgrPtr->mgrList[i].occupied > 0)
+		for(i = 0; i < mgrPtr->mgrListLen; i++)
 		{
-			pthread_cancel(mgrPtr->mgrList[i].tHandle);
-			mgrPtr->mgrList[i].occupied = 0;
-		}
+			if(mgrPtr->mgrList[i].occupied > 0)
+			{
+				pthread_cancel(mgrPtr->mgrList[i].tHandle);
+				mgrPtr->mgrList[i].occupied = 0;
+			}
 
-		if(mgrPtr->mgrList[i].closeJoin > 0)
-		{
-			pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
-			mgrPtr->mgrList[i].closeJoin = 0;
+			if(mgrPtr->mgrList[i].closeJoin > 0)
+			{
+				pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+				mgrPtr->mgrList[i].closeJoin = 0;
+			}
 		}
 	}
 
-	sock_close(mgrPtr->listenSock);
+	if(mgrPtr->serverFlag > 0)
+	{
+		sock_close(mgrPtr->listenSock);
+	}
 
 	LOG("exit");
 }

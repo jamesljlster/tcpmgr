@@ -17,8 +17,11 @@ struct TCPMGR_LIST
 
 typedef struct TCPMGR_STRUCT
 {
+	int stop;
 	int mgrListLen;
 	struct TCPMGR_LIST* mgrList;
+
+	int serverFlag;
 
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
@@ -35,6 +38,8 @@ int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr);
 
 void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr);
 void tcpmgr_cleanup(tcpmgr_t* mgrPtr);
+
+void* tcpmgr_clean_task(void* arg);
 
 #ifdef __cplusplus
 }
