@@ -76,9 +76,12 @@ void tcpmgr_delete(tcpmgr_t mgr)
 	LOG("enter");
 
 	// Cleanup
-	tcpmgr_server_cleanup(mgr);
-	tcpmgr_struct_cleanup(mgr);
-	free(mgr);
+	if(mgr != NULL)
+	{
+		tcpmgr_server_cleanup(mgr);
+		tcpmgr_struct_cleanup(mgr);
+		free(mgr);
+	}
 
 	LOG("exit");
 }
