@@ -4,11 +4,11 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation directory")
 set(BUILD_TEST OFF CACHE BOOL "Enable building test")
 
-project(ServerTemplate C)
+project(tcpmgr C)
 
 # Include subdirectory
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tcpmgr)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tcpmgr)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 if(${BUILD_TEST})
-	#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
