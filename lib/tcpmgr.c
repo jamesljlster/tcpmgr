@@ -137,7 +137,7 @@ RET:
 
 int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 {
-	int ret = 0;
+	int ret = TCPMGR_NO_ERROR;
 	sock_t tmpSocket;
 	struct sockaddr_in mgrAddr;
 
@@ -150,8 +150,8 @@ int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
     tmpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(tmpSocket < 0)
 	{
-		printf("Failed to create socket for listening!\n");
-		ret = -1;
+		LOG("Failed to create socket for listening!");
+		ret = TCPMGR_SYS_FAILED;
 		goto RET;
 	}
 
@@ -159,7 +159,8 @@ int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	ret = bind(tmpSocket, (struct sockaddr*)&mgrAddr, sizeof(struct sockaddr));
 	if(ret < 0)
 	{
-		printf("Failed to bind on %s:%d!\n", argPtr->hostIP, argPtr->hostPort);
+		LOG("Failed to bind on %s:%d!", argPtr->hostIP, argPtr->hostPort);
+		ret = TCPMGR_BIND_FAILED;
 		goto ERR;
 	}
 
@@ -167,7 +168,8 @@ int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	ret = listen(tmpSocket, argPtr->maxClient);
 	if(ret < 0)
 	{
-		printf("Failed to listen on %s:%d!\n", argPtr->hostIP, argPtr->hostPort);
+		LOG("Failed to listen on %s:%d!\n", argPtr->hostIP, argPtr->hostPort);
+		ret = TCPMGR_LISTEN_FAILED;
 		goto ERR;
 	}
 
@@ -223,8 +225,16 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr)
 
 	free(mgrPtr->mgrList);
 	mgrPtr->mgrList = NULL;
-	pthread_mutex_destroy(&mgrPtr->mutex);
-	pthread_cond_destroy(&mgrPtr->cond);
+
+	if(mgrPtr->mutexStatus > 0)
+	{
+		pthread_mutex_destroy(&mgrPtr->mutex);
+	}
+
+	if(mgrPtr->condStatus > 0)
+	{
+		pthread_cond_destroy(&mgrPtr->cond);
+	}
 
 	LOG("exit");
 }
@@ -243,8 +253,9 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	tmpMgr.mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));
 	if(tmpMgr.mgrList == NULL)
 	{
-		printf("Memory allocation for client manage list failed!\n");
-		ret = -1;
+		LOG("Memory allocation for client manage list failed!");
+		ret = TCPMGR_MEM_FAILED;
+		goto RET;
 	}
 	else
 	{
@@ -255,13 +266,23 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	ret = pthread_mutex_init(&tmpMgr.mutex, NULL);
 	if(ret < 0)
 	{
+		ret = TCPMGR_SYS_FAILED;
 		goto ERR;
+	}
+	else
+	{
+		tmpMgr.mutexStatus = 1;
 	}
 
 	ret = pthread_cond_init(&tmpMgr.cond, NULL);
 	if(ret < 0)
 	{
+		ret = TCPMGR_SYS_FAILED;
 		goto ERR;
+	}
+	else
+	{
+		tmpMgr.condStatus = 1;
 	}
 
 	// Assign value

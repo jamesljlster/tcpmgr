@@ -30,7 +30,9 @@ struct TCPMGR
 
 	int serverFlag;
 
+	int mutexStatus;
 	pthread_mutex_t mutex;
+	int condStatus;
 	pthread_cond_t cond;
 
 	int cleanTaskStatus;
