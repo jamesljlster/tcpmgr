@@ -31,8 +31,6 @@ void* tcpmgr_accept_task(void* arg)
 	sock_t clientSock;
 
 	LOG("enter, arg = %p", arg);
-	LOG("mgr->mgrList = %p", mgr->mgrList);
-	LOG("mgr->mgrListLen = %d", mgr->mgrListLen);
 
 	assert(mgr->mgrList != NULL);
 
@@ -100,7 +98,6 @@ void* tcpmgr_clean_task(void* arg)
 	tcpmgr_t mgr = arg;
 
 	LOG("enter, arg = %p", arg);
-	LOG("mgr->mgrList = %p", mgr->mgrList);
 
 	assert(mgr->mgrList != NULL);
 
