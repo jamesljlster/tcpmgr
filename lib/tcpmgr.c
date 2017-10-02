@@ -6,6 +6,15 @@
 #include "tcpmgr_private.h"
 #include "debug.h"
 
+void tcpmgr_set_output_stream(tcpmgr_t mgr, FILE* outStream)
+{
+	LOG("enter");
+
+	mgr->stream = outStream;
+
+	LOG("exit");
+}
+
 int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg)
 {
 	int ret = TCPMGR_NO_ERROR;

@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
-int tcpmgr_set_output_stream(tcpmgr_t mgr);
+void tcpmgr_set_output_stream(tcpmgr_t mgr, FILE* outStream);
 int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg);
 void tcpmgr_stop(tcpmgr_t mgr);
 void tcpmgr_delete(tcpmgr_t mgr);
