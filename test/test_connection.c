@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 	pthread_cancel(sendHandle);
 
 RET:
-	close(sockSvc);
+	sock_close(sockSvc);
 
 	return 0;
 }
@@ -92,7 +92,7 @@ void* serial_recv(void* arg)
 	char readTmp = 0;
 	while(1)
 	{
-		iResult = recv(sockSvc, &read, 1, 0);
+		iResult = recv(sockSvc, &readTmp, 1, 0);
 		if(iResult > 0)
 		{
 			printf("Receive: %c, 0x%X\n", readTmp, readTmp);
@@ -147,7 +147,7 @@ void interrupt_close(int arg)
 	pthread_cancel(recvHandle);
 	pthread_cancel(sendHandle);
 
-	close(sockSvc);
+	sock_close(sockSvc);
 
 	exit(0);
 }
