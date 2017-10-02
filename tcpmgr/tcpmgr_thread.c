@@ -8,6 +8,8 @@ void* tcpmgr_client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
 
+	LOG("enter, arg = %p", arg);
+
 	// Run client task
 	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock);
 
@@ -15,6 +17,7 @@ void* tcpmgr_client_thread(void* arg)
 	pthread_cond_signal(listPtr->condPtr);
 	listPtr->closeJoin = 1;
 
+	LOG("exit");
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -26,6 +29,12 @@ void* tcpmgr_accept_task(void* arg)
 
 	pthread_t clientTh;
 	sock_t clientSock;
+
+	LOG("enter, arg = %p", arg);
+	LOG("mgr->mgrList = %p", mgr->mgrList);
+	LOG("mgr->mgrListLen = %d", mgr->mgrListLen);
+
+	assert(mgr->mgrList != NULL);
 
 	// Loop for accept clients
 	while(mgr->stop == 0)
@@ -80,6 +89,7 @@ void* tcpmgr_accept_task(void* arg)
 		}
 	}
 
+	LOG("exit");
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -87,28 +97,32 @@ void* tcpmgr_accept_task(void* arg)
 void* tcpmgr_clean_task(void* arg)
 {
 	int i;
-	tcpmgr_t mgrPtr = arg;
+	tcpmgr_t mgr = arg;
 
-	assert(mgrPtr->mgrList != NULL);
+	LOG("enter, arg = %p", arg);
+	LOG("mgr->mgrList = %p", mgr->mgrList);
 
-	while(mgrPtr->stop == 0)
+	assert(mgr->mgrList != NULL);
+
+	while(mgr->stop == 0)
 	{
 		// Wait condition
-		pthread_cond_wait(&mgrPtr->cond, &mgrPtr->mutex);
+		pthread_cond_wait(&mgr->cond, &mgr->mutex);
 
 		// Join client thread
-		for(i = 0; i < mgrPtr->mgrListLen; i++)
+		for(i = 0; i < mgr->mgrListLen; i++)
 		{
-			if(mgrPtr->mgrList[i].closeJoin > 0)
+			if(mgr->mgrList[i].closeJoin > 0)
 			{
 				LOG("Join %d thread", i);
-				pthread_join(mgrPtr->mgrList[i].tHandle, NULL);
-				mgrPtr->mgrList[i].closeJoin = 0;
-				mgrPtr->mgrList[i].occupied = 0;
+				pthread_join(mgr->mgrList[i].tHandle, NULL);
+				mgr->mgrList[i].closeJoin = 0;
+				mgr->mgrList[i].occupied = 0;
 			}
 		}
 	}
 
+	LOG("exit");
 	pthread_exit(NULL);
 	return NULL;
 }

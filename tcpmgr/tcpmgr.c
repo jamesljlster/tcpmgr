@@ -12,6 +12,10 @@ int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg)
 
 	LOG("enter");
 
+	// Set client task
+	mgr->client_task = client_task;
+	mgr->usrData = arg;
+
 	// Create clean task
 	ret = pthread_create(&mgr->cleanTask, NULL, tcpmgr_clean_task, mgr);
 	if(ret < 0)
@@ -43,25 +47,32 @@ RET:
 	return ret;
 }
 
-int tcpmgr_join(tcpmgr_t mgr)
+void tcpmgr_stop(tcpmgr_t mgr)
 {
-	int ret = TCPMGR_NO_ERROR;
-
 	LOG("enter");
 
 	// Cancel and join accept task
 	if(mgr->acceptTaskStatus > 0)
 	{
+		LOG("Cancel and join accept task");
 		pthread_cancel(mgr->acceptTask);
 		pthread_join(mgr->acceptTask, NULL);
 	}
 
-	// Cancel and join clean task
+	// Cancel clean task
 	if(mgr->cleanTaskStatus > 0)
 	{
+		LOG("Cancel and join clean task");
 		pthread_cancel(mgr->cleanTask);
 		pthread_join(mgr->cleanTask, NULL);
 	}
+
+	LOG("exit");
+}
+
+void tcpmgr_delete(tcpmgr_t mgr)
+{
+	LOG("enter");
 
 	// Cleanup
 	tcpmgr_server_cleanup(mgr);
@@ -69,11 +80,9 @@ int tcpmgr_join(tcpmgr_t mgr)
 	free(mgr);
 
 	LOG("exit");
-
-	return ret;
 }
 
-int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient)
+int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient)
 {
 	int ret = TCPMGR_NO_ERROR;
 	tcpmgr_t tmpMgr = NULL;
@@ -183,20 +192,16 @@ void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 			if(mgrPtr->mgrList[i].occupied > 0)
 			{
 				pthread_cancel(mgrPtr->mgrList[i].tHandle);
-				mgrPtr->mgrList[i].occupied = 0;
+				mgrPtr->mgrList[i].closeJoin = 1;
 			}
 
 			if(mgrPtr->mgrList[i].closeJoin > 0)
 			{
 				pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+				mgrPtr->mgrList[i].occupied = 0;
 				mgrPtr->mgrList[i].closeJoin = 0;
 			}
 		}
-	}
-
-	if(mgrPtr->serverFlag > 0)
-	{
-		sock_close(mgrPtr->listenSock);
 	}
 
 	LOG("exit");
@@ -206,7 +211,13 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr)
 {
 	LOG("enter");
 
+	if(mgrPtr->serverFlag > 0)
+	{
+		sock_close(mgrPtr->listenSock);
+	}
+
 	free(mgrPtr->mgrList);
+	mgrPtr->mgrList = NULL;
 	pthread_mutex_destroy(&mgrPtr->mutex);
 	pthread_cond_destroy(&mgrPtr->cond);
 

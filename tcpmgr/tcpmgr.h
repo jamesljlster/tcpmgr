@@ -16,10 +16,11 @@ typedef struct TCPMGR* tcpmgr_t;
 extern "C" {
 #endif
 
-int tcpmgr_init(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
+int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
 int tcpmgr_set_output_stream(tcpmgr_t mgr);
 int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg);
-int tcpmgr_join(tcpmgr_t mgr);
+void tcpmgr_stop(tcpmgr_t mgr);
+void tcpmgr_delete(tcpmgr_t mgr);
 
 #ifdef __cplusplus
 }
