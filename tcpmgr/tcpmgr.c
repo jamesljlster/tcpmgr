@@ -35,6 +35,7 @@ int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg)
 		ret = TCPMGR_SYS_FAILED;
 		pthread_cancel(mgr->cleanTask);
 		pthread_join(mgr->cleanTask, NULL);
+		mgr->cleanTaskStatus = 0;
 		goto RET;
 	}
 	else
@@ -120,6 +121,7 @@ int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxCli
 
 	// Assign value
 	*mgrPtr = tmpMgr;
+	goto RET;
 
 ERR:
 	tcpmgr_server_cleanup(tmpMgr);
