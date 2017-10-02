@@ -3,9 +3,136 @@
 #include <string.h>
 
 #include "tcpmgr.h"
+#include "tcpmgr_private.h"
 #include "debug.h"
 
-int tcpmgr_server_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
+int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg)
+{
+	int ret = TCPMGR_NO_ERROR;
+
+	LOG("enter");
+
+	// Set client task
+	mgr->client_task = client_task;
+	mgr->usrData = arg;
+
+	// Create clean task
+	ret = pthread_create(&mgr->cleanTask, NULL, tcpmgr_clean_task, mgr);
+	if(ret < 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		goto RET;
+	}
+	else
+	{
+		mgr->cleanTaskStatus = 1;
+	}
+
+	// Create accept task
+	ret = pthread_create(&mgr->acceptTask, NULL, tcpmgr_accept_task, mgr);
+	if(ret < 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		pthread_cancel(mgr->cleanTask);
+		pthread_join(mgr->cleanTask, NULL);
+		mgr->cleanTaskStatus = 0;
+		goto RET;
+	}
+	else
+	{
+		mgr->acceptTaskStatus = 1;
+	}
+
+RET:
+	LOG("exit");
+	return ret;
+}
+
+void tcpmgr_stop(tcpmgr_t mgr)
+{
+	LOG("enter");
+
+	// Cancel and join accept task
+	if(mgr->acceptTaskStatus > 0)
+	{
+		LOG("Cancel and join accept task");
+		pthread_cancel(mgr->acceptTask);
+		pthread_join(mgr->acceptTask, NULL);
+	}
+
+	// Cancel clean task
+	if(mgr->cleanTaskStatus > 0)
+	{
+		LOG("Cancel and join clean task");
+		pthread_cancel(mgr->cleanTask);
+		pthread_join(mgr->cleanTask, NULL);
+	}
+
+	LOG("exit");
+}
+
+void tcpmgr_delete(tcpmgr_t mgr)
+{
+	LOG("enter");
+
+	// Cleanup
+	tcpmgr_server_cleanup(mgr);
+	tcpmgr_struct_cleanup(mgr);
+	free(mgr);
+
+	LOG("exit");
+}
+
+int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient)
+{
+	int ret = TCPMGR_NO_ERROR;
+	tcpmgr_t tmpMgr = NULL;
+	tcpmgr_arg_t arg;
+
+	// Memory allocation for manage structure
+	tmpMgr = calloc(1, sizeof(struct TCPMGR));
+	if(tmpMgr == NULL)
+	{
+		ret = TCPMGR_MEM_FAILED;
+		goto RET;
+	}
+
+	// Set argument
+	arg.hostIP = hostIP;
+	arg.hostPort = hostPort;
+	arg.maxClient = maxClient;
+
+	// Initial tcpmgr struct
+	ret = tcpmgr_struct_init(tmpMgr, &arg);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	// Initial server service
+	ret = tcpmgr_server_init(tmpMgr, &arg);
+	if(ret < 0)
+	{
+		goto ERR;
+	}
+
+	// Set default output stream
+	tmpMgr->stream = stdout;
+
+	// Assign value
+	*mgrPtr = tmpMgr;
+	goto RET;
+
+ERR:
+	tcpmgr_server_cleanup(tmpMgr);
+	tcpmgr_struct_cleanup(tmpMgr);
+	free(tmpMgr);
+
+RET:
+	return ret;
+}
+
+int tcpmgr_server_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
 	sock_t tmpSocket;
@@ -54,7 +181,7 @@ RET:
 	return ret;
 }
 
-void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
+void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 {
 	int i;
 
@@ -67,45 +194,47 @@ void tcpmgr_server_cleanup(tcpmgr_t* mgrPtr)
 			if(mgrPtr->mgrList[i].occupied > 0)
 			{
 				pthread_cancel(mgrPtr->mgrList[i].tHandle);
-				mgrPtr->mgrList[i].occupied = 0;
+				mgrPtr->mgrList[i].closeJoin = 1;
 			}
 
 			if(mgrPtr->mgrList[i].closeJoin > 0)
 			{
 				pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+				mgrPtr->mgrList[i].occupied = 0;
 				mgrPtr->mgrList[i].closeJoin = 0;
 			}
 		}
 	}
+
+	LOG("exit");
+}
+
+void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr)
+{
+	LOG("enter");
 
 	if(mgrPtr->serverFlag > 0)
 	{
 		sock_close(mgrPtr->listenSock);
 	}
 
-	LOG("exit");
-}
-
-void tcpmgr_cleanup(tcpmgr_t* mgrPtr)
-{
-	LOG("enter");
-
 	free(mgrPtr->mgrList);
+	mgrPtr->mgrList = NULL;
 	pthread_mutex_destroy(&mgrPtr->mutex);
 	pthread_cond_destroy(&mgrPtr->cond);
 
 	LOG("exit");
 }
 
-int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
+int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 {
 	int ret = 0;
-	tcpmgr_t tmpMgr;
+	struct TCPMGR tmpMgr;
 
 	LOG("enter");
 
 	// Zero memory
-	memset(&tmpMgr, 0, sizeof(tcpmgr_t));
+	memset(&tmpMgr, 0, sizeof(struct TCPMGR));
 
 	// Create client manage list
 	tmpMgr.mgrList = calloc(argPtr->maxClient, sizeof(struct TCPMGR_LIST));
@@ -137,7 +266,7 @@ int tcpmgr_init(tcpmgr_t* mgrPtr, tcpmgr_arg_t* argPtr)
 	goto RET;
 
 ERR:
-	tcpmgr_cleanup(&tmpMgr);
+	tcpmgr_struct_cleanup(&tmpMgr);
 
 RET:
 	LOG("exit");
