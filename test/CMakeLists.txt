@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Set variables
-set(PROJECT_NAME ServerTemplate_Test)
+set(PROJECT_NAME tcpmgr_test)
 set(PROJECT_LANGUAGE C)
 set(PROJECT_DEPS tcpmgr pthread)
 
