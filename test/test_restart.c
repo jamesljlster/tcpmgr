@@ -97,6 +97,6 @@ void client_task(void* arg, int socket)
 			break;
 		}
 
-		sleep(10);
+		sleep(3);
 	}
 }
