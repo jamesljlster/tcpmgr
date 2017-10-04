@@ -105,7 +105,7 @@ void* serial_recv(void* arg)
 			}
 			else
 			{
-				printf("receive failed with error: %d\n", iResult);
+				perror("recv() failed with error");
 			}
 
 			pthread_exit(NULL);
@@ -128,7 +128,7 @@ void* serial_send(void* arg)
 			iResult = send(sockSvc, &sendTmp, 1, 0);
 			if(iResult <= 0)
 			{
-				printf("send failed with error: %d\n", iResult);
+				perror("send() failed with error");
 				pthread_exit(NULL);
 				return NULL;
 			}

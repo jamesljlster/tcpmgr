@@ -77,6 +77,9 @@ void tcpmgr_stop(tcpmgr_t mgr)
 		pthread_join(mgr->cleanTask, NULL);
 	}
 
+	// Cancel all client task
+	tcpmgr_server_cleanup(mgr);
+
 	LOG("exit");
 }
 
@@ -207,13 +210,17 @@ void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 		{
 			if(mgrPtr->mgrList[i].occupied > 0)
 			{
+				LOG("Cancel %d client task", i);
 				pthread_cancel(mgrPtr->mgrList[i].tHandle);
 				mgrPtr->mgrList[i].closeJoin = 1;
+
+				sock_close(mgrPtr->mgrList[i].clientSock);
 			}
 
 			if(mgrPtr->mgrList[i].closeJoin > 0)
 			{
-				pthread_join(mgrPtr->mgrList[i].closeJoin, NULL);
+				LOG("Join %d client task", i);
+				pthread_join(mgrPtr->mgrList[i].tHandle, NULL);
 				mgrPtr->mgrList[i].occupied = 0;
 				mgrPtr->mgrList[i].closeJoin = 0;
 			}
