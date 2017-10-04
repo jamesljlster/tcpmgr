@@ -95,6 +95,10 @@ void tcpmgr_delete(tcpmgr_t mgr)
 		free(mgr);
 	}
 
+#ifdef _WIN32
+	WSACleanup();
+#endif
+
 	LOG("exit");
 }
 
@@ -103,6 +107,16 @@ int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxCli
 	int ret = TCPMGR_NO_ERROR;
 	tcpmgr_t tmpMgr = NULL;
 	tcpmgr_arg_t arg;
+
+#ifdef _WIN32
+	WSADATA wsaData;
+	ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if(ret != 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		goto RET;
+	}
+#endif
 
 	// Memory allocation for manage structure
 	tmpMgr = calloc(1, sizeof(struct TCPMGR));
