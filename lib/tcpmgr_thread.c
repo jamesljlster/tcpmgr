@@ -73,6 +73,9 @@ SEL:
 			continue;
 		}
 
+		// Lock client list
+		pthread_mutex_lock(&mgr->mutex);
+
 		// Search empty entry
 		tmpIndex = -1;
 		for(i = 0; i < mgr->mgrListLen; i++)
@@ -112,6 +115,9 @@ SEL:
 				mgr->mgrList[i].occupied = 1;
 			}
 		}
+
+		// Unlock client list
+		pthread_mutex_unlock(&mgr->mutex);
 	}
 
 	LOG("exit");
