@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME tcpmgr_test)
 set(PROJECT_LANGUAGE C)
 set(PROJECT_DEPS tcpmgr pthread)
+if(MINGW)
+	set(PROJECT_DEPS ${PROJECT_DEPS} ws2_32)
+endif()
 
 # Compile setting
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")

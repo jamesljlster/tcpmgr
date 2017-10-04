@@ -30,6 +30,14 @@ void* tcpmgr_accept_task(void* arg)
 	pthread_t clientTh;
 	sock_t clientSock;
 
+#ifdef _WIN32
+	int tmpRet;
+	struct timeval timeout;
+	fd_set fdSet;
+
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+#endif
+
 	LOG("enter, arg = %p", arg);
 
 	assert(mgr->mgrList != NULL);
@@ -37,14 +45,36 @@ void* tcpmgr_accept_task(void* arg)
 	// Loop for accept clients
 	while(mgr->stop == 0)
 	{
-		// Accept client
 		fprintf(mgr->stream, "Waiting for client connection...\n");
+
+#ifdef _WIN32
+#define DEFAULT_TIMEOUT 100000
+SEL:
+		// Create cancel point for windows
+		// Set timeout
+		timeout.tv_sec = 0;
+		timeout.tv_usec = DEFAULT_TIMEOUT;
+
+		// Select
+		FD_ZERO(&fdSet);
+		FD_SET(mgr->listenSock, &fdSet);
+		tmpRet = select(mgr->listenSock + 1, &fdSet, NULL, NULL, &timeout);
+		if(tmpRet == 0)
+		{
+			goto SEL;
+		}
+#endif
+
+		// Accept client
 		clientSock = accept(mgr->listenSock, NULL, NULL);
 		if(clientSock < 0)
 		{
 			fprintf(mgr->stream, "Accept failed!\n");
 			continue;
 		}
+
+		// Lock client list
+		pthread_mutex_lock(&mgr->mutex);
 
 		// Search empty entry
 		tmpIndex = -1;
@@ -85,6 +115,9 @@ void* tcpmgr_accept_task(void* arg)
 				mgr->mgrList[i].occupied = 1;
 			}
 		}
+
+		// Unlock client list
+		pthread_mutex_unlock(&mgr->mutex);
 	}
 
 	LOG("exit");

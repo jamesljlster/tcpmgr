@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 	pthread_cancel(sendHandle);
 
 RET:
-	close(sockSvc);
+	sock_close(sockSvc);
 
 	return 0;
 }
@@ -147,7 +147,7 @@ void interrupt_close(int arg)
 	pthread_cancel(recvHandle);
 	pthread_cancel(sendHandle);
 
-	close(sockSvc);
+	sock_close(sockSvc);
 
 	exit(0);
 }
