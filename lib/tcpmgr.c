@@ -228,7 +228,6 @@ void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 				pthread_cancel(mgrPtr->mgrList[i].tHandle);
 				mgrPtr->mgrList[i].closeJoin = 1;
 
-				sock_close(mgrPtr->mgrList[i].clientSock);
 			}
 
 			if(mgrPtr->mgrList[i].closeJoin > 0)
@@ -237,6 +236,11 @@ void tcpmgr_server_cleanup(tcpmgr_t mgrPtr)
 				pthread_join(mgrPtr->mgrList[i].tHandle, NULL);
 				mgrPtr->mgrList[i].occupied = 0;
 				mgrPtr->mgrList[i].closeJoin = 0;
+			}
+
+			if(mgrPtr->mgrList[i].sockStatus > 0)
+			{
+				sock_close(mgrPtr->mgrList[i].clientSock);
 			}
 		}
 	}
