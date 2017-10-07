@@ -12,6 +12,8 @@ struct TCPMGR_LIST
 {
 	pthread_t tHandle;
 	pthread_cond_t* condPtr;
+
+	int sockStatus;
 	sock_t clientSock;
 
 	int occupied;

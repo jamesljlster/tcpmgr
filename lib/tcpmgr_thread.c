@@ -13,6 +13,10 @@ void* tcpmgr_client_thread(void* arg)
 	// Run client task
 	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock);
 
+	// Close socket
+	sock_close(listPtr->clientSock);
+	listPtr->sockStatus = 0;
+
 	// Cleanup
 	pthread_cond_signal(listPtr->condPtr);
 	listPtr->closeJoin = 1;
@@ -112,6 +116,7 @@ SEL:
 			{
 				mgr->mgrList[i].tHandle = clientTh;
 				mgr->mgrList[i].clientSock = clientSock;
+				mgr->mgrList[i].sockStatus = 1;
 				mgr->mgrList[i].occupied = 1;
 			}
 		}
