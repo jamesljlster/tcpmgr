@@ -1,17 +1,47 @@
+/**
+ * @author	Zheng-Ling Lai
+ * @file	tcpmgr.h
+**/
+
 #ifndef __TCPMGR_H__
 #define __TCPMGR_H__
 
 #include <stdio.h>
 
+/**
+ * Return value definitions of tcpmgr library.
+ */
 enum TCPMGR_RETURN_VALUE
 {
+	/**
+	 * No error.
+	 */
 	TCPMGR_NO_ERROR			= 0,
+
+	/**
+	 * Memory operation failed.
+	 */
 	TCPMGR_MEM_FAILED		= -1,
+
+	/**
+	 * System function failed.
+	 */
 	TCPMGR_SYS_FAILED		= -2,
+
+	/**
+	 * Failed to bind on given IP address and port.
+	 */
 	TCPMGR_BIND_FAILED		= -3,
+
+	/**
+	 * Failed to listen on the socket.
+	 */
 	TCPMGR_LISTEN_FAILED	= -4
 };
 
+/**
+ * Type definition of tcpmgr handle.
+ */
 typedef struct TCPMGR* tcpmgr_t;
 
 #ifdef __cplusplus
