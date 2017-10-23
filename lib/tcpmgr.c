@@ -118,6 +118,13 @@ int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxCli
 	}
 #endif
 
+	// Checking argument
+	if(maxClient <= 1)
+	{
+		ret = TCPMGR_INVALID_ARG;
+		goto RET;
+	}
+
 	// Memory allocation for manage structure
 	tmpMgr = calloc(1, sizeof(struct TCPMGR));
 	if(tmpMgr == NULL)

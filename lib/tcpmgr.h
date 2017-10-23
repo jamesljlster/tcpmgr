@@ -36,7 +36,12 @@ enum TCPMGR_RETURN_VALUE
 	/**
 	 * Failed to listen on the socket.
 	 */
-	TCPMGR_LISTEN_FAILED	= -4
+	TCPMGR_LISTEN_FAILED	= -4,
+
+	/**
+	 * Invalid argument(s).
+	 */
+	TCPMGR_INVALID_ARG		= -5
 };
 
 /**
