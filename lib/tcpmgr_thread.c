@@ -171,6 +171,7 @@ void* tcpmgr_clean_task(void* arg)
 		}
 
 		// Join client thread
+		LOG("Cleaning...");
 		for(i = 0; i < mgr->mgrListLen; i++)
 		{
 			if(mgr->mgrList[i].closeJoin > 0)
