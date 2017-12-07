@@ -145,23 +145,29 @@ void* tcpmgr_clean_task(void* arg)
 
 	assert(mgr->mgrList != NULL);
 
+	// Lock mutex
+	pthread_mutex_lock(&mgr->mutex);
+
 	while(mgr->stop == 0)
 	{
 		// Set timeout
-		timeout.tv_sec = CLEAN_ROUTINE;
-		timeout.tv_nsec = 0;
+		clock_gettime(CLOCK_MONOTONIC, &timeout);
+		timeout.tv_sec += CLEAN_ROUTINE;
 
 		// Wait condition
 		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
 		if(ret != 0)
 		{
+			printf("pthread_cond_timedwait() failed with error: %d\n", ret);
+
 			// Try to lock mutex
-			timeout.tv_sec = CLEAN_ROUTINE;
-			timeout.tv_nsec = 0;
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
+			timeout.tv_sec += CLEAN_ROUTINE;
 
 			ret = pthread_mutex_timedlock(&mgr->mutex, &timeout);
 			if(ret != 0)
 			{
+				printf("pthread_mutex_timedlock() failed with error: %d\n", ret);
 				continue;
 			}
 			else
