@@ -136,8 +136,8 @@ SEL:
 void* tcpmgr_clean_task(void* arg)
 {
 	int i;
-	int ret;
-	int mutexStatus;
+	//int ret;
+	//int mutexStatus;
 	tcpmgr_t mgr = arg;
 	struct timespec timeout;
 
@@ -151,18 +151,20 @@ void* tcpmgr_clean_task(void* arg)
 	while(mgr->stop == 0)
 	{
 		// Set timeout
-		clock_gettime(CLOCK_MONOTONIC, &timeout);
-		timeout.tv_sec += CLEAN_ROUTINE;
+		timeout.tv_sec = time(NULL) + CLEAN_ROUTINE;
+		timeout.tv_nsec = 0;
 
 		// Wait condition
+		pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		/*
 		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
 		if(ret != 0)
 		{
 			printf("pthread_cond_timedwait() failed with error: %d\n", ret);
 
 			// Try to lock mutex
-			clock_gettime(CLOCK_MONOTONIC, &timeout);
-			timeout.tv_sec += CLEAN_ROUTINE;
+			timeout.tv_sec = time(NULL) + CLEAN_ROUTINE;
+			timeout.tv_nsec = 0;
 
 			ret = pthread_mutex_timedlock(&mgr->mutex, &timeout);
 			if(ret != 0)
@@ -175,6 +177,7 @@ void* tcpmgr_clean_task(void* arg)
 				mutexStatus = 1;
 			}
 		}
+		*/
 
 		// Join client thread
 		LOG("Cleaning...");
@@ -190,10 +193,12 @@ void* tcpmgr_clean_task(void* arg)
 		}
 
 		// Unlock mutex
+		/*
 		if(mutexStatus > 0)
 		{
 			pthread_mutex_unlock(&mgr->mutex);
 		}
+		*/
 	}
 
 	LOG("exit");
