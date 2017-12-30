@@ -1,8 +1,11 @@
 #include <assert.h>
+#include <time.h>
 
 #include "tcpmgr.h"
 #include "tcpmgr_private.h"
 #include "debug.h"
+
+#define CLEAN_ROUTINE	3	// Second
 
 void* tcpmgr_client_thread(void* arg)
 {
@@ -133,18 +136,51 @@ SEL:
 void* tcpmgr_clean_task(void* arg)
 {
 	int i;
+	//int ret;
+	//int mutexStatus;
 	tcpmgr_t mgr = arg;
+	struct timespec timeout;
 
 	LOG("enter, arg = %p", arg);
 
 	assert(mgr->mgrList != NULL);
 
+	// Lock mutex
+	pthread_mutex_lock(&mgr->mutex);
+
 	while(mgr->stop == 0)
 	{
+		// Set timeout
+		clock_gettime(CLOCK_REALTIME, &timeout);
+		timeout.tv_sec += CLEAN_ROUTINE;
+
 		// Wait condition
-		pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		/*
+		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		if(ret != 0)
+		{
+			printf("pthread_cond_timedwait() failed with error: %d\n", ret);
+
+			// Try to lock mutex
+			timeout.tv_sec = time(NULL) + CLEAN_ROUTINE;
+			timeout.tv_nsec = 0;
+
+			ret = pthread_mutex_timedlock(&mgr->mutex, &timeout);
+			if(ret != 0)
+			{
+				printf("pthread_mutex_timedlock() failed with error: %d\n", ret);
+				continue;
+			}
+			else
+			{
+				mutexStatus = 1;
+			}
+		}
+		*/
 
 		// Join client thread
+		LOG("Cleaning...");
 		for(i = 0; i < mgr->mgrListLen; i++)
 		{
 			if(mgr->mgrList[i].closeJoin > 0)
@@ -155,6 +191,14 @@ void* tcpmgr_clean_task(void* arg)
 				mgr->mgrList[i].occupied = 0;
 			}
 		}
+
+		// Unlock mutex
+		/*
+		if(mutexStatus > 0)
+		{
+			pthread_mutex_unlock(&mgr->mutex);
+		}
+		*/
 	}
 
 	LOG("exit");

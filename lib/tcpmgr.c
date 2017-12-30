@@ -119,7 +119,7 @@ int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxCli
 #endif
 
 	// Checking argument
-	if(maxClient <= 1)
+	if(maxClient <= 0)
 	{
 		ret = TCPMGR_INVALID_ARG;
 		goto RET;
