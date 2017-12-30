@@ -151,8 +151,8 @@ void* tcpmgr_clean_task(void* arg)
 	while(mgr->stop == 0)
 	{
 		// Set timeout
-		timeout.tv_sec = time(NULL) + CLEAN_ROUTINE;
-		timeout.tv_nsec = 0;
+		clock_gettime(CLOCK_REALTIME, &timeout);
+		timeout.tv_sec += CLEAN_ROUTINE;
 
 		// Wait condition
 		pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
