@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 # Environment variables
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation directory")
 set(BUILD_TEST OFF CACHE BOOL "Enable building test")
-set(BUILD_CS_LIB OFF CACHE BOOL "Build library for Visual C#")
+set(BUILD_CS_LIB OFF CACHE BOOL "Build library for Visual C# only")
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
@@ -17,13 +17,12 @@ if(${BUILD_TEST})
 	set(UTIL_PATHS ${UTIL_PATHS} ${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
 
-# If Visual Studio detected
-if(MSVC)
-	set(BUILD_CS_LIB ON)
-	set(LIB_PATHS ${LIB_PATHS} ${CMAKE_CURRENT_SOURCE_DIR}/cs/lib)
+# If build C#
+if(${BUILD_CS_LIB})
+	set(LIB_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cs/lib)
 
 	if(${BUILD_TEST})
-		set(UTIL_PATHS ${UTIL_PATHS} ${CMAKE_CURRENT_SOURCE_DIR}/cs/test)
+		set(UTIL_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cs/test)
 	endif()
 endif()
 
