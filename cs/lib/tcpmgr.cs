@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
+using System.Net.Sockets;
 
 namespace netlib
 {
     public partial class tcpmgr
     {
         // Constructor
-        public tcpmgr()
+        public tcpmgr(String hostIP, int hostPort, int maxClient)
         {
-
+            IPEndPoint hostAddrInfo = new IPEndPoint(IPAddress.Parse(hostIP), hostPort);
+            this.listenSock.Bind(hostAddrInfo);
+            this.listenSock.Listen(maxClient);
         }
 
         // Destructor
@@ -19,5 +19,8 @@ namespace netlib
         {
 
         }
+
+        // Private objects
+        Socket listenSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     }
 }

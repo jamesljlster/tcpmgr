@@ -27,6 +27,12 @@ file(GLOB PROJECT_SRCS
 
 # Build library
 add_library(${PROJECT_NAME} STATIC ${PROJECT_SRCS})
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DOTNET_REFERENCES
+	"System"
+	"System.Net"
+	"System.Net.Sockets"
+	)
+
 set_target_properties(${PROJECT_NAME}
 	PROPERTIES
 	OUTPUT_NAME			${PROJECT_NAME}
