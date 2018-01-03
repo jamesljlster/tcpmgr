@@ -12,7 +12,7 @@ namespace Stack_HW
     {
         static void Main(string[] args)
         {
-            tcpmgr tmgr = new tcpmgr();
+            tcpmgr tmgr = new tcpmgr("0.0.0.0", 27015, 5);
             Console.WriteLine("hello");
         }
     }

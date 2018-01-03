@@ -8,7 +8,7 @@ namespace netlib
     public partial class tcpmgr
     {
         // Private data types
-        private delegate void tcpmgr_client_task(object usrData);
+        public delegate void tcpmgr_client_task(object usrData, Socket sock);
 
         private class tcpmgr_list
         {
@@ -27,6 +27,17 @@ namespace netlib
         // Constructor
         public tcpmgr(String hostIP, int hostPort, int maxClient)
         {
+            // Check argument
+            if(maxClient <= 0)
+            {
+                throw new ArgumentException("Invalid maxClient argument");
+            }
+
+            // Create client manage list
+            this.mgrList = new tcpmgr_list[maxClient];
+            this.mgrListLen = maxClient;
+
+            // Bind and listen
             IPEndPoint hostAddrInfo = new IPEndPoint(IPAddress.Parse(hostIP), hostPort);
             this.listenSock.Bind(hostAddrInfo);
             this.listenSock.Listen(maxClient);
