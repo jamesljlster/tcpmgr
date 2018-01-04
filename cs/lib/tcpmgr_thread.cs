@@ -10,7 +10,6 @@ namespace netlib
         private void tcpmgr_client_thread(object obj)
         {
             tcpmgr_list listRef = (tcpmgr_list)obj;
-            Monitor.Enter(listRef.cond);
 
             // Run client task
             listRef.client_task(listRef.usrData, listRef.clientSock);
@@ -20,6 +19,8 @@ namespace netlib
             listRef.sockStatus = 0;
 
             // Cleanup
+            Monitor.Enter(listRef.cond);
+
             Monitor.Pulse(listRef.cond);
             listRef.closeJoin = 1;
 
