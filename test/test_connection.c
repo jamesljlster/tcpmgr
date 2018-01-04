@@ -22,6 +22,16 @@ int main(int argc, char* argv[])
 
 	signal(SIGINT, interrupt_close);
 
+#ifdef _WIN32
+	WSADATA wsaData;
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if(iResult != 0)
+	{
+		printf("Failed to initial WinSock!\n");
+		return -1;
+	}
+#endif
+
 	// Checking
 	if(argc < 3)
 	{
@@ -82,6 +92,10 @@ int main(int argc, char* argv[])
 
 RET:
 	sock_close(sockSvc);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	return 0;
 }
