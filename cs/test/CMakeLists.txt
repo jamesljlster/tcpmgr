@@ -29,6 +29,12 @@ foreach(TEST_FILE_PATH ${PROJECT_SRCS})
 
 	# Build executable
 	add_executable(${TEST_FILE_NAME} ${TEST_FILE_PATH})
+	set_property(TARGET ${TEST_FILE_NAME} PROPERTY VS_DOTNET_REFERENCES
+		"System"
+		"System.Net"
+		"System.Net.Sockets"
+		)
+
 	set_target_properties(${TEST_FILE_NAME}
 		PROPERTIES OUTPUT_NAME ${TEST_FILE_NAME}
 		)
