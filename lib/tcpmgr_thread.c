@@ -105,22 +105,22 @@ SEL:
 		else
 		{
 			// Set argument
-			mgr->mgrList[i].client_task = mgr->client_task;
-			mgr->mgrList[i].usrData = mgr->usrData;
-			mgr->mgrList[i].condPtr = &mgr->cond;
+			mgr->mgrList[tmpIndex].client_task = mgr->client_task;
+			mgr->mgrList[tmpIndex].usrData = mgr->usrData;
+			mgr->mgrList[tmpIndex].condPtr = &mgr->cond;
 
 			// Create client thread
-			if(pthread_create(&clientTh, NULL, tcpmgr_client_thread, &mgr->mgrList[i]) < 0)
+			if(pthread_create(&clientTh, NULL, tcpmgr_client_thread, &mgr->mgrList[tmpIndex]) < 0)
 			{
 				fprintf(mgr->stream, "Client thread initialization failed! Connection rejected!\n");
 				sock_close(clientSock);
 			}
 			else
 			{
-				mgr->mgrList[i].tHandle = clientTh;
-				mgr->mgrList[i].clientSock = clientSock;
-				mgr->mgrList[i].sockStatus = 1;
-				mgr->mgrList[i].occupied = 1;
+				mgr->mgrList[tmpIndex].tHandle = clientTh;
+				mgr->mgrList[tmpIndex].clientSock = clientSock;
+				mgr->mgrList[tmpIndex].sockStatus = 1;
+				mgr->mgrList[tmpIndex].occupied = 1;
 			}
 		}
 
