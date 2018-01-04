@@ -36,6 +36,10 @@ namespace netlib
 
             // Create client manage list
             this.mgrList = new tcpmgr_list[maxClient];
+            for(int i = 0; i < maxClient; i++)
+            {
+                this.mgrList[i] = new tcpmgr_list();
+            }
 
             // Bind and listen
             this.listenSock = new TcpListener(IPAddress.Parse(hostIP), hostPort);
@@ -99,24 +103,27 @@ namespace netlib
 
         private void server_cleanup()
         {
-            for(int i = 0; i < this.mgrList.Length; i++)
+            for (int i = 0; i < this.mgrList.Length; i++)
             {
-                if(this.mgrList[i].occupied > 0)
+                if (this.mgrList[i].occupied > 0)
                 {
                     this.mgrList[i].tHandle.Abort();
                     this.mgrList[i].closeJoin = 1;
                 }
 
-                if(this.mgrList[i].closeJoin > 0)
+                if (this.mgrList[i].closeJoin > 0)
                 {
                     this.mgrList[i].tHandle.Join();
                     this.mgrList[i].closeJoin = 0;
                     this.mgrList[i].occupied = 0;
                 }
 
-                if(this.mgrList[i].clientSock.Connected)
+                if (this.mgrList[i].clientSock != null)
                 {
-                    this.mgrList[i].clientSock.Close();
+                    if (this.mgrList[i].clientSock.Connected)
+                    {
+                        this.mgrList[i].clientSock.Close();
+                    }
                 }
             }
         }
