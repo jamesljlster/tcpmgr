@@ -8,7 +8,7 @@ namespace netlib
     public partial class tcpmgr
     {
         // Private data types
-        public delegate void tcpmgr_client_task(ref object usrData, ref Socket sock);
+        public delegate void tcpmgr_client_task(object usrData, Socket sock);
 
         private class tcpmgr_list
         {
@@ -55,11 +55,8 @@ namespace netlib
         int serverFlag;
 
         object cond = new object();
-
-        int cleanTaskStatus;
+        
         Thread cleanTask;
-
-        int acceptTaskStatus;
         Thread acceptTask;
 
         TcpListener listenSock;

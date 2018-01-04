@@ -12,7 +12,7 @@ namespace netlib
             tcpmgr_list listRef = (tcpmgr_list)obj;
 
             // Run client task
-            listRef.client_task(ref listRef.usrData, ref listRef.clientSock);
+            listRef.client_task(listRef.usrData, listRef.clientSock);
 
             // Close socket
             listRef.clientSock.Close();
