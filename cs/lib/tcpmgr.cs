@@ -8,20 +8,20 @@ namespace netlib
     public partial class tcpmgr
     {
         // Private data types
-        public delegate void tcpmgr_client_task(object usrData, Socket sock);
+        public delegate void tcpmgr_client_task(ref object usrData, ref Socket sock);
 
         private class tcpmgr_list
         {
-            Thread tHandle;
+            public Thread tHandle;
 
-            int sockStatus;
-            Socket clientSock;
+            public int sockStatus;
+            public Socket clientSock;
 
-            int occupied;
-            int closeJoin;
+            public int occupied;
+            public int closeJoin;
 
-            tcpmgr_client_task client_task;
-            object usrData;
+            public tcpmgr_client_task client_task;
+            public object usrData;
         }
 
         // Constructor
@@ -55,6 +55,8 @@ namespace netlib
         tcpmgr_list[] mgrList;
 
         int serverFlag;
+
+        object cond;
 
         int cleanTaskStatus;
         Thread cleanTask;
