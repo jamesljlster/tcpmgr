@@ -10,6 +10,7 @@ namespace netlib
         private void tcpmgr_client_thread(object obj)
         {
             tcpmgr_list listRef = (tcpmgr_list)obj;
+            Monitor.Enter(listRef.cond);
 
             // Run client task
             listRef.client_task(listRef.usrData, listRef.clientSock);
@@ -21,6 +22,8 @@ namespace netlib
             // Cleanup
             Monitor.Pulse(listRef.cond);
             listRef.closeJoin = 1;
+
+            Monitor.Exit(listRef.cond);
         }
 
         private void tcpmgr_accept_thread(object obj)
@@ -81,19 +84,26 @@ namespace netlib
         {
             tcpmgr mgrRef = (tcpmgr)obj;
 
-            // Wait condition
-            Monitor.Wait(mgrRef.cond);
+            Monitor.Enter(mgrRef.cond);
 
-            // Join client thread
-            for(int i = 0; i < mgrRef.mgrList.Length; i++)
+            while(mgrRef.stopFlag == 0)
             {
-                if(mgrRef.mgrList[i].closeJoin > 0)
+                // Wait condition
+                Monitor.Wait(mgrRef.cond);
+
+                // Join client thread
+                for (int i = 0; i < mgrRef.mgrList.Length; i++)
                 {
-                    mgrRef.mgrList[i].tHandle.Join();
-                    mgrRef.mgrList[i].closeJoin = 0;
-                    mgrRef.mgrList[i].occupied = 0;
+                    if (mgrRef.mgrList[i].closeJoin > 0)
+                    {
+                        mgrRef.mgrList[i].tHandle.Join();
+                        mgrRef.mgrList[i].closeJoin = 0;
+                        mgrRef.mgrList[i].occupied = 0;
+                    }
                 }
             }
+
+            Monitor.Exit(mgrRef.cond);
         }
     }
 }

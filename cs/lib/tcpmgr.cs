@@ -39,6 +39,7 @@ namespace netlib
 
             // Bind and listen
             this.listenSock = new TcpListener(IPAddress.Parse(hostIP), hostPort);
+            this.listenSock.Start(maxClient);
         }
 
         // Destructor
@@ -71,11 +72,11 @@ namespace netlib
 
             // Create clean task
             this.cleanTask = new Thread(tcpmgr_clean_task);
-            this.cleanTask.Start();
+            this.cleanTask.Start(this);
 
             // Create accept task
             this.acceptTask = new Thread(tcpmgr_accept_thread);
-            this.acceptTask.Start();
+            this.acceptTask.Start(this);
         }
 
         public void stop()
