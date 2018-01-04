@@ -21,8 +21,8 @@ void* tcpmgr_client_thread(void* arg)
 	listPtr->sockStatus = 0;
 
 	// Cleanup
-	pthread_cond_signal(listPtr->condPtr);
 	listPtr->closeJoin = 1;
+	pthread_cond_signal(listPtr->condPtr);
 
 	LOG("exit");
 	pthread_exit(NULL);
