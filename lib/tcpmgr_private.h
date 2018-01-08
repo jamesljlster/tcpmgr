@@ -12,6 +12,7 @@ struct TCPMGR_LIST
 {
 	pthread_t tHandle;
 	pthread_cond_t* condPtr;
+	pthread_mutex_t* mutexPtr;
 
 	int sockStatus;
 	sock_t clientSock;

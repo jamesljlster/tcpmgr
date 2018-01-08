@@ -22,7 +22,9 @@ void* tcpmgr_client_thread(void* arg)
 
 	// Cleanup
 	listPtr->closeJoin = 1;
+	pthread_mutex_lock(listPtr->mutexPtr);
 	pthread_cond_signal(listPtr->condPtr);
+	pthread_mutex_unlock(listPtr->mutexPtr);
 
 	LOG("exit");
 	pthread_exit(NULL);
@@ -108,6 +110,7 @@ SEL:
 			mgr->mgrList[tmpIndex].client_task = mgr->client_task;
 			mgr->mgrList[tmpIndex].usrData = mgr->usrData;
 			mgr->mgrList[tmpIndex].condPtr = &mgr->cond;
+			mgr->mgrList[tmpIndex].mutexPtr = &mgr->mutex;
 
 			mgr->mgrList[tmpIndex].clientSock = clientSock;
 			mgr->mgrList[tmpIndex].sockStatus = 1;
@@ -141,7 +144,7 @@ void* tcpmgr_clean_task(void* arg)
 	//int ret;
 	//int mutexStatus;
 	tcpmgr_t mgr = arg;
-	struct timespec timeout;
+	//struct timespec timeout;
 
 	LOG("enter, arg = %p", arg);
 
@@ -153,11 +156,12 @@ void* tcpmgr_clean_task(void* arg)
 	while(mgr->stop == 0)
 	{
 		// Set timeout
-		clock_gettime(CLOCK_REALTIME, &timeout);
-		timeout.tv_sec += CLEAN_ROUTINE;
+		//clock_gettime(CLOCK_REALTIME, &timeout);
+		//timeout.tv_sec += CLEAN_ROUTINE;
 
 		// Wait condition
-		pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		//pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
 		/*
 		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
 		if(ret != 0)
