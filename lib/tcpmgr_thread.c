@@ -7,6 +7,11 @@
 
 #define CLEAN_ROUTINE	3	// Second
 
+void tcpmgr_mutex_unlock(void* arg)
+{
+	pthread_mutex_unlock(arg);
+}
+
 void* tcpmgr_client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
@@ -22,7 +27,9 @@ void* tcpmgr_client_thread(void* arg)
 
 	// Cleanup
 	listPtr->closeJoin = 1;
+	pthread_mutex_lock(listPtr->mutexPtr);
 	pthread_cond_signal(listPtr->condPtr);
+	pthread_mutex_unlock(listPtr->mutexPtr);
 
 	LOG("exit");
 	pthread_exit(NULL);
@@ -32,6 +39,7 @@ void* tcpmgr_client_thread(void* arg)
 void* tcpmgr_accept_task(void* arg)
 {
 	int i, tmpIndex;
+	int mutexStatus = 0;
 	tcpmgr_t mgr = arg;
 
 	pthread_t clientTh;
@@ -48,6 +56,9 @@ void* tcpmgr_accept_task(void* arg)
 	LOG("enter, arg = %p", arg);
 
 	assert(mgr->mgrList != NULL);
+
+	// Set cleanup handler
+	pthread_cleanup_push(tcpmgr_mutex_unlock, &mgr->mutex);
 
 	// Loop for accept clients
 	while(mgr->stop == 0)
@@ -82,6 +93,7 @@ SEL:
 
 		// Lock client list
 		pthread_mutex_lock(&mgr->mutex);
+		mutexStatus = 1;
 
 		// Search empty entry
 		tmpIndex = -1;
@@ -108,6 +120,7 @@ SEL:
 			mgr->mgrList[tmpIndex].client_task = mgr->client_task;
 			mgr->mgrList[tmpIndex].usrData = mgr->usrData;
 			mgr->mgrList[tmpIndex].condPtr = &mgr->cond;
+			mgr->mgrList[tmpIndex].mutexPtr = &mgr->mutex;
 
 			mgr->mgrList[tmpIndex].clientSock = clientSock;
 			mgr->mgrList[tmpIndex].sockStatus = 1;
@@ -128,7 +141,10 @@ SEL:
 
 		// Unlock client list
 		pthread_mutex_unlock(&mgr->mutex);
+		mutexStatus = 0;
 	}
+
+	pthread_cleanup_pop(mutexStatus);
 
 	LOG("exit");
 	pthread_exit(NULL);
@@ -138,48 +154,26 @@ SEL:
 void* tcpmgr_clean_task(void* arg)
 {
 	int i;
-	//int ret;
-	//int mutexStatus;
+	int mutexStatus;
 	tcpmgr_t mgr = arg;
-	struct timespec timeout;
 
 	LOG("enter, arg = %p", arg);
 
 	assert(mgr->mgrList != NULL);
 
+	// Setup cleanup handler
+	pthread_cleanup_push(tcpmgr_mutex_unlock, &mgr->mutex);
+
 	// Lock mutex
 	pthread_mutex_lock(&mgr->mutex);
+	mutexStatus = 1;
 
 	while(mgr->stop == 0)
 	{
-		// Set timeout
-		clock_gettime(CLOCK_REALTIME, &timeout);
-		timeout.tv_sec += CLEAN_ROUTINE;
-
 		// Wait condition
-		pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
-		/*
-		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
-		if(ret != 0)
-		{
-			printf("pthread_cond_timedwait() failed with error: %d\n", ret);
-
-			// Try to lock mutex
-			timeout.tv_sec = time(NULL) + CLEAN_ROUTINE;
-			timeout.tv_nsec = 0;
-
-			ret = pthread_mutex_timedlock(&mgr->mutex, &timeout);
-			if(ret != 0)
-			{
-				printf("pthread_mutex_timedlock() failed with error: %d\n", ret);
-				continue;
-			}
-			else
-			{
-				mutexStatus = 1;
-			}
-		}
-		*/
+		mutexStatus = 0;
+		pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		mutexStatus = 1;
 
 		// Join client thread
 		LOG("Cleaning...");
@@ -193,15 +187,9 @@ void* tcpmgr_clean_task(void* arg)
 				mgr->mgrList[i].occupied = 0;
 			}
 		}
-
-		// Unlock mutex
-		/*
-		if(mutexStatus > 0)
-		{
-			pthread_mutex_unlock(&mgr->mutex);
-		}
-		*/
 	}
+
+	pthread_cleanup_pop(mutexStatus);
 
 	LOG("exit");
 	pthread_exit(NULL);

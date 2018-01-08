@@ -12,6 +12,7 @@ struct TCPMGR_LIST
 {
 	pthread_t tHandle;
 	pthread_cond_t* condPtr;
+	pthread_mutex_t* mutexPtr;
 
 	int sockStatus;
 	sock_t clientSock;
@@ -61,6 +62,8 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr);
 
 void* tcpmgr_clean_task(void* arg);
 void* tcpmgr_accept_task(void* arg);
+
+void tcpmgr_mutex_unlock(void* arg);
 
 #ifdef __cplusplus
 }
