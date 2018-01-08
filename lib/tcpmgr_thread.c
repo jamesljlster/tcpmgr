@@ -7,6 +7,11 @@
 
 #define CLEAN_ROUTINE	3	// Second
 
+void tcpmgr_mutex_unlock(void* arg)
+{
+	pthread_mutex_unlock(arg);
+}
+
 void* tcpmgr_client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
@@ -34,6 +39,7 @@ void* tcpmgr_client_thread(void* arg)
 void* tcpmgr_accept_task(void* arg)
 {
 	int i, tmpIndex;
+	int mutexStatus = 0;
 	tcpmgr_t mgr = arg;
 
 	pthread_t clientTh;
@@ -50,6 +56,9 @@ void* tcpmgr_accept_task(void* arg)
 	LOG("enter, arg = %p", arg);
 
 	assert(mgr->mgrList != NULL);
+
+	// Set cleanup handler
+	pthread_cleanup_push(tcpmgr_mutex_unlock, &mgr->mutex);
 
 	// Loop for accept clients
 	while(mgr->stop == 0)
@@ -84,6 +93,7 @@ SEL:
 
 		// Lock client list
 		pthread_mutex_lock(&mgr->mutex);
+		mutexStatus = 1;
 
 		// Search empty entry
 		tmpIndex = -1;
@@ -131,7 +141,10 @@ SEL:
 
 		// Unlock client list
 		pthread_mutex_unlock(&mgr->mutex);
+		mutexStatus = 0;
 	}
+
+	pthread_cleanup_pop(mutexStatus);
 
 	LOG("exit");
 	pthread_exit(NULL);
@@ -142,7 +155,7 @@ void* tcpmgr_clean_task(void* arg)
 {
 	int i;
 	//int ret;
-	//int mutexStatus;
+	int mutexStatus;
 	tcpmgr_t mgr = arg;
 	//struct timespec timeout;
 
@@ -150,8 +163,12 @@ void* tcpmgr_clean_task(void* arg)
 
 	assert(mgr->mgrList != NULL);
 
+	// Setup cleanup handler
+	pthread_cleanup_push(tcpmgr_mutex_unlock, &mgr->mutex);
+
 	// Lock mutex
 	pthread_mutex_lock(&mgr->mutex);
+	mutexStatus = 1;
 
 	while(mgr->stop == 0)
 	{
@@ -160,7 +177,9 @@ void* tcpmgr_clean_task(void* arg)
 		//timeout.tv_sec += CLEAN_ROUTINE;
 
 		// Wait condition
+		mutexStatus = 0;
 		pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		mutexStatus = 1;
 		//pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
 		/*
 		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
@@ -206,6 +225,8 @@ void* tcpmgr_clean_task(void* arg)
 		}
 		*/
 	}
+
+	pthread_cleanup_pop(mutexStatus);
 
 	LOG("exit");
 	pthread_exit(NULL);

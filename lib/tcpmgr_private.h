@@ -63,6 +63,8 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr);
 void* tcpmgr_clean_task(void* arg);
 void* tcpmgr_accept_task(void* arg);
 
+void tcpmgr_mutex_unlock(void* arg);
+
 #ifdef __cplusplus
 }
 #endif
