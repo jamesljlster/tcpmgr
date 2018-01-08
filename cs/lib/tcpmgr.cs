@@ -57,8 +57,6 @@ namespace netlib
         int stopFlag;
         tcpmgr_list[] mgrList;
 
-        int serverFlag;
-
         object cond = new object();
         
         Thread cleanTask;
