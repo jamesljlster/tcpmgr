@@ -49,6 +49,27 @@ enum TCPMGR_RETURN_VALUE
  */
 typedef struct TCPMGR* tcpmgr_t;
 
+/**
+ * Type definition of tcpmgr information.
+ */
+typedef struct TCPMGR_INFO
+{
+	/**
+	 * Client ID given by tcpmgr.
+	 */
+	int clientID;
+
+	/**
+	 * IP address of client connection.
+	 */
+	const char* ipAddr;
+
+	/**
+	 * Port of client connection.
+	 */
+	int port;
+} tcpmgr_info_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
