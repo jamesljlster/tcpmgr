@@ -28,6 +28,7 @@ void* tcpmgr_client_thread(void* arg)
 	// Cleanup
 	listPtr->closeJoin = 1;
 	pthread_mutex_lock(listPtr->mutexPtr);
+	*listPtr->cleanIndexPtr = -1; // Not able to get current client index yet;
 	pthread_cond_signal(listPtr->condPtr);
 	pthread_mutex_unlock(listPtr->mutexPtr);
 
@@ -121,6 +122,7 @@ SEL:
 			mgr->mgrList[tmpIndex].usrData = mgr->usrData;
 			mgr->mgrList[tmpIndex].condPtr = &mgr->cond;
 			mgr->mgrList[tmpIndex].mutexPtr = &mgr->mutex;
+			mgr->mgrList[tmpIndex].cleanIndexPtr = &mgr->cleanIndex;
 
 			mgr->mgrList[tmpIndex].clientSock = clientSock;
 			mgr->mgrList[tmpIndex].sockStatus = 1;
@@ -177,14 +179,28 @@ void* tcpmgr_clean_task(void* arg)
 
 		// Join client thread
 		LOG("Cleaning...");
-		for(i = 0; i < mgr->mgrListLen; i++)
+		if(mgr->cleanIndex >= 0)
 		{
-			if(mgr->mgrList[i].closeJoin > 0)
+			// Cleanup given client
+			i = mgr->cleanIndex;
+
+			LOG("Join %d thread", i);
+			pthread_join(mgr->mgrList[i].tHandle, NULL);
+			mgr->mgrList[i].closeJoin = 0;
+			mgr->mgrList[i].occupied = 0;
+		}
+		else
+		{
+			// Search client to cleanup
+			for(i = 0; i < mgr->mgrListLen; i++)
 			{
-				LOG("Join %d thread", i);
-				pthread_join(mgr->mgrList[i].tHandle, NULL);
-				mgr->mgrList[i].closeJoin = 0;
-				mgr->mgrList[i].occupied = 0;
+				if(mgr->mgrList[i].closeJoin > 0)
+				{
+					LOG("Join %d thread", i);
+					pthread_join(mgr->mgrList[i].tHandle, NULL);
+					mgr->mgrList[i].closeJoin = 0;
+					mgr->mgrList[i].occupied = 0;
+				}
 			}
 		}
 	}

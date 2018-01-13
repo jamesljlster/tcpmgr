@@ -13,6 +13,7 @@ struct TCPMGR_LIST
 	pthread_t tHandle;
 	pthread_cond_t* condPtr;
 	pthread_mutex_t* mutexPtr;
+	int* cleanIndexPtr;
 
 	int sockStatus;
 	sock_t clientSock;
@@ -33,6 +34,7 @@ struct TCPMGR
 
 	int serverFlag;
 
+	int cleanIndex;
 	int mutexStatus;
 	pthread_mutex_t mutex;
 	int condStatus;
