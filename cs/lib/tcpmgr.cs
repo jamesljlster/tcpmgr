@@ -36,7 +36,7 @@ namespace netlib
 
             // Create client manage list
             this.mgrList = new tcpmgr_list[maxClient];
-            for(int i = 0; i < maxClient; i++)
+            for (int i = 0; i < maxClient; i++)
             {
                 this.mgrList[i] = new tcpmgr_list();
             }
@@ -58,7 +58,7 @@ namespace netlib
         tcpmgr_list[] mgrList;
 
         object cond = new object();
-        
+
         Thread cleanTask;
         Thread acceptTask;
 
@@ -84,15 +84,21 @@ namespace netlib
         public void stop()
         {
             // Cancel and join accept task
-            if(this.acceptTask.IsAlive)
+            if (this.acceptTask != null)
             {
-                this.acceptTask.Abort();
+                if (this.acceptTask.IsAlive)
+                {
+                    this.acceptTask.Abort();
+                }
             }
 
             // Cancel clean task
-            if(this.cleanTask.IsAlive)
+            if (this.cleanTask != null)
             {
-                this.cleanTask.Abort();
+                if (this.cleanTask.IsAlive)
+                {
+                    this.cleanTask.Abort();
+                }
             }
 
             // Cancel all client task
