@@ -25,7 +25,7 @@ struct TCPMGR_LIST
 	char clientAddr[INET_ADDRSTRLEN];
 	int clientPort;
 
-	void (*client_task)(void*, int);
+	void (*client_task)(void*, int, tcpmgr_info_t);
 	void* usrData;
 };
 
@@ -52,7 +52,7 @@ struct TCPMGR
 
 	sock_t listenSock;
 
-	void (*client_task)(void*, int);
+	void (*client_task)(void*, int, tcpmgr_info_t);
 	void* usrData;
 };
 

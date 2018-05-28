@@ -16,11 +16,17 @@ void tcpmgr_mutex_unlock(void* arg)
 void* tcpmgr_client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
+	tcpmgr_info_t clientInfo;
 
 	LOG("enter, arg = %p", arg);
 
+	// Set client information
+	clientInfo.clientID = listPtr->clientID;
+	clientInfo.ipAddr = (const char*)listPtr->clientAddr;
+	clientInfo.port = listPtr->clientPort;
+
 	// Run client task
-	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock);
+	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock, clientInfo);
 
 	// Close socket
 	sock_close(listPtr->clientSock);
