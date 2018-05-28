@@ -21,6 +21,10 @@ struct TCPMGR_LIST
 	int occupied;
 	int closeJoin;
 
+	int clientID;
+	char clientAddr[INET_ADDRSTRLEN];
+	int clientPort;
+
 	void (*client_task)(void*, int);
 	void* usrData;
 };

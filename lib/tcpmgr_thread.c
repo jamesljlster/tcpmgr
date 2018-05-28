@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 #include <time.h>
 
 #include "tcpmgr.h"
@@ -46,6 +47,9 @@ void* tcpmgr_accept_task(void* arg)
 	pthread_t clientTh;
 	sock_t clientSock;
 
+	struct sockaddr_in clientAddr;
+	socklen_t clientAddrLen;
+
 #ifdef _WIN32
 	int tmpRet;
 	struct timeval timeout;
@@ -85,7 +89,8 @@ SEL:
 #endif
 
 		// Accept client
-		clientSock = accept(mgr->listenSock, NULL, NULL);
+		clientAddrLen = sizeof(struct sockaddr_in);
+		clientSock = accept(mgr->listenSock, (struct sockaddr*)&clientAddr, &clientAddrLen);
 		if(clientSock < 0)
 		{
 			fprintf(mgr->stream, "Accept failed!\n");
@@ -127,6 +132,11 @@ SEL:
 			mgr->mgrList[tmpIndex].clientSock = clientSock;
 			mgr->mgrList[tmpIndex].sockStatus = 1;
 
+			// Set client information
+			mgr->mgrList[tmpIndex].clientID = tmpIndex;
+			strcpy(mgr->mgrList[tmpIndex].clientAddr, inet_ntoa(clientAddr.sin_addr));
+			mgr->mgrList[tmpIndex].clientPort = ntohs(clientAddr.sin_port);
+
 			// Create client thread
 			if(pthread_create(&clientTh, NULL, tcpmgr_client_thread, &mgr->mgrList[tmpIndex]) < 0)
 			{
@@ -138,6 +148,9 @@ SEL:
 			{
 				mgr->mgrList[tmpIndex].tHandle = clientTh;
 				mgr->mgrList[tmpIndex].occupied = 1;
+
+				fprintf(mgr->stream, "Client %s:%d connected\n",
+						mgr->mgrList[tmpIndex].clientAddr, mgr->mgrList[tmpIndex].clientPort);
 			}
 		}
 
