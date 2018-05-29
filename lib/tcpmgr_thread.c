@@ -35,7 +35,7 @@ void* tcpmgr_client_thread(void* arg)
 	// Cleanup
 	listPtr->closeJoin = 1;
 	pthread_mutex_lock(listPtr->mutexPtr);
-	*listPtr->cleanIndexPtr = -1; // Not able to get current client index yet;
+	*listPtr->cleanIndexPtr = listPtr->clientID;
 	pthread_cond_signal(listPtr->condPtr);
 	pthread_mutex_unlock(listPtr->mutexPtr);
 
