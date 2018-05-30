@@ -350,7 +350,7 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	}
 
 	// Assign value
-	tmpMgr.cleanIndex = 1;
+	tmpMgr.cleanIndex = -1;
 	*mgrPtr = tmpMgr;
 	goto RET;
 

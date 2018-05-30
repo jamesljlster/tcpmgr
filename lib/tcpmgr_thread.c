@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "tcpmgr.h"
 #include "tcpmgr_private.h"
@@ -174,9 +175,11 @@ SEL:
 
 void* tcpmgr_clean_task(void* arg)
 {
-	int i;
+	int i, ret;
 	int mutexStatus;
 	tcpmgr_t mgr = arg;
+
+	struct timespec timeout;
 
 	LOG("enter, arg = %p", arg);
 
@@ -191,10 +194,22 @@ void* tcpmgr_clean_task(void* arg)
 
 	while(mgr->stop == 0)
 	{
+		// Set timeout
+		clock_gettime(CLOCK_REALTIME, &timeout);
+		timeout.tv_sec += CLEAN_ROUTINE;
+
 		// Wait condition
 		mutexStatus = 0;
-		pthread_cond_wait(&mgr->cond, &mgr->mutex);
-		mutexStatus = 1;
+		//pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		if(ret == 0 || ret == ETIMEDOUT)
+		{
+			mutexStatus = 1;
+		}
+		else
+		{
+			continue;
+		}
 
 		// Join client thread
 		LOG("Cleaning...");
@@ -207,6 +222,9 @@ void* tcpmgr_clean_task(void* arg)
 			pthread_join(mgr->mgrList[i].tHandle, NULL);
 			mgr->mgrList[i].closeJoin = 0;
 			mgr->mgrList[i].occupied = 0;
+
+			// Reset clean index
+			mgr->cleanIndex = -1;
 		}
 		else
 		{
