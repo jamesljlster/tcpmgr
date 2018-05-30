@@ -27,7 +27,7 @@ int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int, tcpmgr_info_t), v
 
 	// Create clean task
 	ret = pthread_create(&mgr->cleanTask, NULL, tcpmgr_clean_task, mgr);
-	if(ret < 0)
+	if(ret != 0)
 	{
 		ret = TCPMGR_SYS_FAILED;
 		goto RET;
@@ -39,7 +39,7 @@ int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int, tcpmgr_info_t), v
 
 	// Create accept task
 	ret = pthread_create(&mgr->acceptTask, NULL, tcpmgr_accept_task, mgr);
-	if(ret < 0)
+	if(ret != 0)
 	{
 		ret = TCPMGR_SYS_FAILED;
 		pthread_cancel(mgr->cleanTask);
@@ -272,6 +272,11 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr)
 		pthread_mutex_destroy(&mgrPtr->mutex);
 	}
 
+	if(mgrPtr->mutexAttrStatus > 0)
+	{
+		pthread_mutexattr_destroy(&mgrPtr->mutexAttr);
+	}
+
 	if(mgrPtr->condStatus > 0)
 	{
 		pthread_cond_destroy(&mgrPtr->cond);
@@ -304,8 +309,26 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	}
 
 	// Create mutex and condition variable
-	ret = pthread_mutex_init(&tmpMgr.mutex, NULL);
-	if(ret < 0)
+	ret = pthread_mutexattr_init(&tmpMgr.mutexAttr);
+	if(ret != 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		goto ERR;
+	}
+	else
+	{
+		tmpMgr.mutexAttrStatus = 1;
+	}
+
+	ret = pthread_mutexattr_settype(&tmpMgr.mutexAttr, PTHREAD_MUTEX_ERRORCHECK);
+	if(ret != 0)
+	{
+		ret = TCPMGR_SYS_FAILED;
+		goto ERR;
+	}
+
+	ret = pthread_mutex_init(&tmpMgr.mutex, &tmpMgr.mutexAttr);
+	if(ret != 0)
 	{
 		ret = TCPMGR_SYS_FAILED;
 		goto ERR;
@@ -316,7 +339,7 @@ int tcpmgr_struct_init(tcpmgr_t mgrPtr, tcpmgr_arg_t* argPtr)
 	}
 
 	ret = pthread_cond_init(&tmpMgr.cond, NULL);
-	if(ret < 0)
+	if(ret != 0)
 	{
 		ret = TCPMGR_SYS_FAILED;
 		goto ERR;
