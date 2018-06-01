@@ -12,6 +12,8 @@ struct TCPMGR_LIST
 {
 	pthread_t tHandle;
 	pthread_cond_t* condPtr;
+	pthread_mutex_t* mutexPtr;
+	int* cleanIndexPtr;
 
 	int sockStatus;
 	sock_t clientSock;
@@ -19,7 +21,11 @@ struct TCPMGR_LIST
 	int occupied;
 	int closeJoin;
 
-	void (*client_task)(void*, int);
+	int clientID;
+	char clientAddr[INET_ADDRSTRLEN];
+	int clientPort;
+
+	void (*client_task)(void*, int, tcpmgr_info_t);
 	void* usrData;
 };
 
@@ -32,6 +38,9 @@ struct TCPMGR
 
 	int serverFlag;
 
+	int cleanIndex;
+	int mutexAttrStatus;
+	pthread_mutexattr_t mutexAttr;
 	int mutexStatus;
 	pthread_mutex_t mutex;
 	int condStatus;
@@ -45,7 +54,7 @@ struct TCPMGR
 
 	sock_t listenSock;
 
-	void (*client_task)(void*, int);
+	void (*client_task)(void*, int, tcpmgr_info_t);
 	void* usrData;
 };
 
@@ -61,6 +70,8 @@ void tcpmgr_struct_cleanup(tcpmgr_t mgrPtr);
 
 void* tcpmgr_clean_task(void* arg);
 void* tcpmgr_accept_task(void* arg);
+
+void tcpmgr_mutex_unlock(void* arg);
 
 #ifdef __cplusplus
 }

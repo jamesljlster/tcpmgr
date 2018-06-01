@@ -10,8 +10,6 @@
 #define DEBUG
 #include <debug.h>
 
-#define SERVER_LOG	"server.log"
-
 void client_task(void* arg, int socket, tcpmgr_info_t cInfo);
 
 tcpmgr_t mgr = NULL;
@@ -22,27 +20,14 @@ int main()
 	int ret;
 	char tmpRead;
 	char buf[100];
-	FILE* outStream = NULL;
-
-	// Open output stream file
-	outStream = fopen(SERVER_LOG, "w");
-	if(outStream == NULL)
-	{
-		printf("Failed to open %s\n", SERVER_LOG);
-		ret = -1;
-		goto RET;
-	}
 
 	// Initial tcpmgr
-	ret = tcpmgr_create(&mgr, "0.0.0.0", 27015, 5);
+	ret = tcpmgr_create(&mgr, "0.0.0.0", 27015, 1);
 	if(ret < 0)
 	{
 		printf("tcpmgr_init() failed with error: %d\n", ret);
 		goto RET;
 	}
-
-	// Set output stream
-	tcpmgr_set_output_stream(mgr, outStream);
 
 	// Start tcpmgr
 	ret = tcpmgr_start(mgr, client_task, NULL);
@@ -83,15 +68,12 @@ int main()
 	tcpmgr_stop(mgr);
 
 RET:
-	if(outStream != NULL)
-	{
-		fclose(outStream);
-	}
 	tcpmgr_delete(mgr);
 	return ret;
 }
 
 void client_task(void* arg, int socket, tcpmgr_info_t cInfo)
 {
-	sock_close(socket);
+	const char* buf = "Hello world\n";
+	send(socket, buf, strlen(buf), 0);
 }
