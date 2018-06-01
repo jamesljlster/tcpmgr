@@ -1,5 +1,7 @@
 #include <assert.h>
+#include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "tcpmgr.h"
 #include "tcpmgr_private.h"
@@ -15,11 +17,17 @@ void tcpmgr_mutex_unlock(void* arg)
 void* tcpmgr_client_thread(void* arg)
 {
 	struct TCPMGR_LIST* listPtr = arg;
+	tcpmgr_info_t clientInfo;
 
 	LOG("enter, arg = %p", arg);
 
+	// Set client information
+	clientInfo.clientID = listPtr->clientID;
+	clientInfo.ipAddr = (const char*)listPtr->clientAddr;
+	clientInfo.port = listPtr->clientPort;
+
 	// Run client task
-	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock);
+	listPtr->client_task(listPtr->usrData, (int)listPtr->clientSock, clientInfo);
 
 	// Close socket
 	sock_close(listPtr->clientSock);
@@ -28,6 +36,7 @@ void* tcpmgr_client_thread(void* arg)
 	// Cleanup
 	listPtr->closeJoin = 1;
 	pthread_mutex_lock(listPtr->mutexPtr);
+	*listPtr->cleanIndexPtr = listPtr->clientID;
 	pthread_cond_signal(listPtr->condPtr);
 	pthread_mutex_unlock(listPtr->mutexPtr);
 
@@ -44,6 +53,9 @@ void* tcpmgr_accept_task(void* arg)
 
 	pthread_t clientTh;
 	sock_t clientSock;
+
+	struct sockaddr_in clientAddr;
+	socklen_t clientAddrLen;
 
 #ifdef _WIN32
 	int tmpRet;
@@ -84,7 +96,8 @@ SEL:
 #endif
 
 		// Accept client
-		clientSock = accept(mgr->listenSock, NULL, NULL);
+		clientAddrLen = sizeof(struct sockaddr_in);
+		clientSock = accept(mgr->listenSock, (struct sockaddr*)&clientAddr, &clientAddrLen);
 		if(clientSock < 0)
 		{
 			fprintf(mgr->stream, "Accept failed!\n");
@@ -121,9 +134,15 @@ SEL:
 			mgr->mgrList[tmpIndex].usrData = mgr->usrData;
 			mgr->mgrList[tmpIndex].condPtr = &mgr->cond;
 			mgr->mgrList[tmpIndex].mutexPtr = &mgr->mutex;
+			mgr->mgrList[tmpIndex].cleanIndexPtr = &mgr->cleanIndex;
 
 			mgr->mgrList[tmpIndex].clientSock = clientSock;
 			mgr->mgrList[tmpIndex].sockStatus = 1;
+
+			// Set client information
+			mgr->mgrList[tmpIndex].clientID = tmpIndex;
+			strcpy(mgr->mgrList[tmpIndex].clientAddr, inet_ntoa(clientAddr.sin_addr));
+			mgr->mgrList[tmpIndex].clientPort = ntohs(clientAddr.sin_port);
 
 			// Create client thread
 			if(pthread_create(&clientTh, NULL, tcpmgr_client_thread, &mgr->mgrList[tmpIndex]) < 0)
@@ -136,6 +155,9 @@ SEL:
 			{
 				mgr->mgrList[tmpIndex].tHandle = clientTh;
 				mgr->mgrList[tmpIndex].occupied = 1;
+
+				fprintf(mgr->stream, "Client %s:%d connected\n",
+						mgr->mgrList[tmpIndex].clientAddr, mgr->mgrList[tmpIndex].clientPort);
 			}
 		}
 
@@ -153,9 +175,11 @@ SEL:
 
 void* tcpmgr_clean_task(void* arg)
 {
-	int i;
+	int i, ret;
 	int mutexStatus;
 	tcpmgr_t mgr = arg;
+
+	struct timespec timeout;
 
 	LOG("enter, arg = %p", arg);
 
@@ -170,21 +194,50 @@ void* tcpmgr_clean_task(void* arg)
 
 	while(mgr->stop == 0)
 	{
+		// Set timeout
+		clock_gettime(CLOCK_REALTIME, &timeout);
+		timeout.tv_sec += CLEAN_ROUTINE;
+
 		// Wait condition
 		mutexStatus = 0;
-		pthread_cond_wait(&mgr->cond, &mgr->mutex);
-		mutexStatus = 1;
+		//pthread_cond_wait(&mgr->cond, &mgr->mutex);
+		ret = pthread_cond_timedwait(&mgr->cond, &mgr->mutex, &timeout);
+		if(ret == 0 || ret == ETIMEDOUT)
+		{
+			mutexStatus = 1;
+		}
+		else
+		{
+			continue;
+		}
 
 		// Join client thread
 		LOG("Cleaning...");
-		for(i = 0; i < mgr->mgrListLen; i++)
+		if(mgr->cleanIndex >= 0)
 		{
-			if(mgr->mgrList[i].closeJoin > 0)
+			// Cleanup given client
+			i = mgr->cleanIndex;
+
+			LOG("Join %d thread", i);
+			pthread_join(mgr->mgrList[i].tHandle, NULL);
+			mgr->mgrList[i].closeJoin = 0;
+			mgr->mgrList[i].occupied = 0;
+
+			// Reset clean index
+			mgr->cleanIndex = -1;
+		}
+		else
+		{
+			// Search client to cleanup
+			for(i = 0; i < mgr->mgrListLen; i++)
 			{
-				LOG("Join %d thread", i);
-				pthread_join(mgr->mgrList[i].tHandle, NULL);
-				mgr->mgrList[i].closeJoin = 0;
-				mgr->mgrList[i].occupied = 0;
+				if(mgr->mgrList[i].closeJoin > 0)
+				{
+					LOG("Join %d thread", i);
+					pthread_join(mgr->mgrList[i].tHandle, NULL);
+					mgr->mgrList[i].closeJoin = 0;
+					mgr->mgrList[i].occupied = 0;
+				}
 			}
 		}
 	}

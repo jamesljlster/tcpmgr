@@ -10,7 +10,7 @@
 #define DEBUG
 #include <debug.h>
 
-void client_task(void* arg, int socket);
+void client_task(void* arg, int socket, tcpmgr_info_t cInfo);
 
 tcpmgr_t mgr = NULL;
 
@@ -72,7 +72,7 @@ RET:
 	return ret;
 }
 
-void client_task(void* arg, int socket)
+void client_task(void* arg, int socket, tcpmgr_info_t cInfo)
 {
 	const char* buf = "Hello world\n";
 	send(socket, buf, strlen(buf), 0);

@@ -49,13 +49,34 @@ enum TCPMGR_RETURN_VALUE
  */
 typedef struct TCPMGR* tcpmgr_t;
 
+/**
+ * Type definition of tcpmgr information.
+ */
+typedef struct TCPMGR_INFO
+{
+	/**
+	 * Client ID given by tcpmgr.
+	 */
+	int clientID;
+
+	/**
+	 * IP address of client connection.
+	 */
+	const char* ipAddr;
+
+	/**
+	 * Port of client connection.
+	 */
+	int port;
+} tcpmgr_info_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int tcpmgr_create(tcpmgr_t* mgrPtr, const char* hostIP, int hostPort, int maxClient);
 void tcpmgr_set_output_stream(tcpmgr_t mgr, FILE* outStream);
-int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int), void* arg);
+int tcpmgr_start(tcpmgr_t mgr, void (*client_task)(void*, int, tcpmgr_info_t), void* arg);
 void tcpmgr_stop(tcpmgr_t mgr);
 void tcpmgr_delete(tcpmgr_t mgr);
 
